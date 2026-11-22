@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Free online tools for PDF, images, text, calculators, QR codes, creators and SEO. Fast, mobile-friendly and privacy-conscious.">
+<meta name="theme-color" content="#101827">
+<title>Toolwise Daily — 50 Free Online Tools</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--ink:#172033;--muted:#667085;--line:#e4e8f0;--brand:#5b5ce2;--brand2:#8889ff;--dark:#101827}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+header{background:linear-gradient(125deg,#101827,#202c50);color:white;padding:28px 18px 24px}
+.wrap{max-width:1120px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.logo{font-weight:850;font-size:20px;letter-spacing:-.5px}.logo span{color:#a5a6ff}
+.hero{padding:30px 0 16px}.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.1;letter-spacing:-1.4px;margin:0 0 12px}.hero p{color:#d2d8e7;max-width:660px;margin:0 0 18px}
+.search{display:flex;gap:8px;max-width:650px}.search input{flex:1;min-width:0;padding:14px 16px;border:1px solid #ffffff35;border-radius:12px;background:#fff;color:#111827;font:inherit}
+main{padding:24px 16px 60px}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 22px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--muted);font-size:13px}.stat b{color:var(--ink)}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px}.sidebar,.content,.toolbox{background:var(--panel);border:1px solid var(--line);border-radius:16px}.sidebar{padding:12px;height:max-content;position:sticky;top:12px}.catbtn{display:flex;width:100%;border:0;background:transparent;text-align:left;padding:10px;border-radius:9px;color:#344054;font:inherit;cursor:pointer}.catbtn.active,.catbtn:hover{background:#eeeeff;color:#4445c6;font-weight:700}
+.content{padding:18px;min-width:0}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 14px}.sectionhead h2{font-size:19px;margin:0}.count{color:var(--muted);font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.toolcard{border:1px solid var(--line);border-radius:13px;padding:14px;cursor:pointer;background:white;transition:.15s}.toolcard:hover{border-color:#a4a5ff;transform:translateY(-2px);box-shadow:0 8px 24px #2020400d}.toolcard h3{font-size:14px;margin:0 0 5px}.toolcard p{font-size:12px;color:var(--muted);margin:0}.tag{font-size:10px;color:#5556c9;background:#f0f0ff;border-radius:20px;padding:3px 7px;display:inline-block;margin-bottom:8px}
+.toolview{display:none}.toolview.active{display:block}.back{border:0;background:#f0f1ff;color:#4c4dc5;padding:8px 11px;border-radius:9px;font-weight:700;cursor:pointer}.tooltitle{margin:14px 0 4px;font-size:24px;letter-spacing:-.5px}.desc{color:var(--muted);margin:0 0 18px}.workarea{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fcfcff}
+label{display:block;font-weight:650;font-size:13px;margin:12px 0 6px}input,textarea,select{width:100%;padding:11px 12px;border:1px solid #d8deea;border-radius:9px;font:inherit;background:white;color:var(--ink)}textarea{min-height:130px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}.btn{border:0;border-radius:9px;padding:11px 15px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer;margin-top:12px}.btn.secondary{background:#edf0f7;color:#344054}.output{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f6fa;border:1px solid var(--line);padding:13px;border-radius:10px;margin-top:13px;min-height:42px}.hint{font-size:12px;color:var(--muted);margin-top:9px}.hidden{display:none!important}.preview{max-width:100%;max-height:340px;display:block;margin:12px auto;border-radius:8px}.footer{color:var(--muted);font-size:12px;text-align:center;padding:25px 12px}
+@media(max-width:850px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.sidebar{position:static;display:flex;overflow:auto;gap:5px}.catbtn{white-space:nowrap;width:auto}.content{padding:13px}}
+@media(max-width:480px){header{padding:20px 14px}.hero{padding-top:24px}.cards{grid-template-columns:1fr}.toolcard{padding:13px}.search input{padding:12px}.workarea{padding:12px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+</head>
+<body>
+<header><div class="wrap">
+<div class="top"><div class="logo">Toolwise <span>Daily</span></div><div style="font-size:12px;color:#cbd5e1">50 useful tools · Free to use</div></div>
+<div class="hero"><h1>Everyday tools.<br>One simple place.</h1><p>Free online tools for PDFs, images, text, calculations, creators and SEO. Built to work smoothly on your phone.</p>
+<div class="search"><input id="search" placeholder="Search 50 tools..." aria-label="Search tools"></div></div>
+</div></header>
+<main class="wrap">
+<div class="stats"><div class="stat"><b>50</b> tools</div><div class="stat"><b>5</b> categories</div><div class="stat">Browser-based processing where possible</div></div>
+<div class="layout">
+<nav class="sidebar" id="categories"></nav>
+<section class="content">
+<div id="listing"><div class="sectionhead"><h2 id="catTitle">All tools</h2><span class="count" id="count">50 tools</span></div><div class="cards" id="cards"></div></div>
+<div class="toolview" id="toolview"><button class="back" id="back">← All tools</button><h2 class="tooltitle" id="toolTitle"></h2><p class="desc" id="toolDesc"></p><div class="workarea" id="workarea"></div><div class="hint">Privacy note: files selected for image and PDF tools are processed in your browser where supported. QR generation uses a local browser library. Avoid uploading sensitive files to tools you do not trust.</div></div>
+</section></div>
+</main>
+<div class="footer">Toolwise Daily · Useful tools, made simple. Always review important calculations and generated content before use.</div>
+<script>
+const tools = [
+["Merge PDF","PDF","Combine multiple PDF files into one document."],["Compress PDF","PDF","Try to reduce PDF file size by re-saving its structure."],["Split PDF","PDF","Extract selected pages into a new PDF."],["JPG to PDF","PDF","Turn an image into a downloadable PDF."],["PDF to JPG","PDF","Render PDF pages as JPG images."],["PDF Page Extractor","PDF","Extract a range of pages from a PDF."],["Rotate PDF","PDF","Rotate all pages in a PDF."],["Delete PDF Pages","PDF","Remove selected pages from a PDF."],["PDF Page Calculator","PDF","Calculate page totals and print-sheet estimates."],["PDF Metadata Viewer","PDF","Inspect basic PDF metadata."],
+["Image Compressor","Image","Compress an image by adjusting output quality."],["Image Resizer","Image","Resize images by width and height."],["JPG to PNG","Image","Convert JPG images to PNG."],["PNG to JPG","Image","Convert PNG images to JPG."],["WebP to JPG","Image","Convert WebP images to JPG."],["Image Cropper","Image","Create a centred crop with custom dimensions."],["Image to PDF","Image","Place an image into a PDF document."],["Image Rotator","Image","Rotate an image in your browser."],["Image to Base64","Image","Convert an image into a Base64 data URL."],["Image Dimension Checker","Image","View image dimensions and file size."],
+["Word Counter","Text","Count words, characters, sentences and reading time."],["Character Counter","Text","Count characters with and without spaces."],["Case Converter","Text","Convert text to uppercase, lowercase and title case."],["Remove Duplicate Lines","Text","Remove repeated lines from text."],["Text to Slug Converter","Text","Create a clean URL slug from a title."],["Word Frequency Counter","Text","Count the most common words in text."],["Sentence Counter","Text","Count sentences in a passage."],["Reading Time Calculator","Text","Estimate reading time from word count."],["Lorem Ipsum Generator","Text","Generate placeholder text."],["Text Reverser","Text","Reverse text or the order of words."],
+["Percentage Calculator","Calculators","Calculate percentages and percentage changes."],["Age Calculator","Calculators","Calculate age from date of birth."],["GST Calculator","Calculators","Calculate GST amount and inclusive or exclusive totals."],["Discount Calculator","Calculators","Calculate sale price after a discount."],["Profit Margin Calculator","Calculators","Calculate gross profit and margin."],["Unit Converter","Calculators","Convert common length, weight and temperature units."],["Date Difference Calculator","Calculators","Find the number of days between two dates."],["Time Duration Calculator","Calculators","Calculate duration between two times."],["Number to Words Converter","Calculators","Convert whole numbers into English words."],["Random Number Generator","Calculators","Generate random numbers in a chosen range."],
+["QR Code Generator","Creator & SEO","Create a QR code for text, URLs or contact details."],["Wi-Fi QR Generator","Creator & SEO","Create a QR code for Wi-Fi connection details."],["WhatsApp Link Generator","Creator & SEO","Create a click-to-chat WhatsApp URL."],["YouTube Thumbnail Size Checker","Creator & SEO","Check common YouTube thumbnail dimensions."],["Instagram Image Size Checker","Creator & SEO","Check common Instagram image dimensions."],["YouTube Title Generator","Creator & SEO","Generate title ideas from your topic."],["Instagram Caption Generator","Creator & SEO","Create caption starters and calls to action."],["Meta Description Generator","Creator & SEO","Draft a concise meta description."],["SERP Preview Tool","Creator & SEO","Preview a Google-style title and description snippet."],["Robots.txt Generator","Creator & SEO","Generate a basic robots.txt file."]
+];
+const cats=["All tools","PDF","Image","Text","Calculators","Creator & SEO"];
+let activeCat="All tools", activeTool=null, currentImage=null;
+let deferredEls={}; const $=id=>document.getElementById(id)||(deferredEls[id]||(deferredEls[id]={}));
+function render(){
+ $("categories").innerHTML=cats.map(c=>`<button class="catbtn ${activeCat===c?'active':''}" data-cat="${c}">${c}</button>`).join("");
+ $("categories").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;showListing()});
+ const q=$("search").value.toLowerCase();
+ const list=tools.filter(t=>(activeCat==="All tools"||t[1]===activeCat)&&(!q||(t[0]+" "+t[2]).toLowerCase().includes(q)));
+ $("catTitle").textContent=activeCat;$("count").textContent=list.length+" tools";
+ $("cards").innerHTML=list.map(t=>`<article class="toolcard" data-name="${t[0]}"><span class="tag">${t[1]}</span><h3>${t[0]}</h3><p>${t[2]}</p></article>`).join("");
+ $("cards").querySelectorAll(".toolcard").forEach(c=>c.onclick=()=>openTool(c.dataset.name));
+}
+function showListing(){$("listing").style.display="block";$("toolview").classList.remove("active");render()}
+function openTool(name){activeTool=name;const t=tools.find(x=>x[0]===name);$("listing").style.display="none";$("toolview").classList.add("active");$("toolTitle").textContent=t[0];$("toolDesc").textContent=t[2];buildTool(name)}
+$("back").onclick=showListing;$("search").addEventListener("input",()=>{if(activeTool)showListing();else render()});
+function field(id,label,type="text",placeholder="",value=""){return `<label>${label}</label><input id="${id}" type="${type}" placeholder="${placeholder}" value="${value}">`}
+function area(id,label,placeholder="Paste or type here..."){return `<label>${label}</label><textarea id="${id}" placeholder="${placeholder}"></textarea>`}
+function action(label,fn){return `<button class="btn" id="go">${label}</button><div class="output" id="out" aria-live="polite">Your result will appear here.</div>`}
+function fileInput(label="Choose file",accept="*/*",multiple=false){return `<label>${label}</label><input id="file" type="file" accept="${accept}" ${multiple?"multiple":""}>`}
+function run(fn){$("go").onclick=()=>{try{fn()}catch(e){out("Something went wrong: "+e.message)}}}
+function out(v){$("out").textContent=String(v)}
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+function readFile(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsArrayBuffer(f)})}
+function imgFromFile(f){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=URL.createObjectURL(f)})}
+function canvasBlob(canvas,type="image/jpeg",quality=.88){return new Promise(res=>canvas.toBlob(res,type,quality))}
+function setupCanvasImage(mode){
+ $("file").onchange=async e=>{const f=e.target.files[0];if(!f)return;currentImage=await imgFromFile(f);$("out").textContent=`Loaded ${f.name} · ${currentImage.naturalWidth} × ${currentImage.naturalHeight} px · ${(f.size/1024).toFixed(1)} KB`;let old=$("preview");if(old)old.remove();const p=document.createElement("img");p.id="preview";p.className="preview";p.src=currentImage.src;$("workarea").appendChild(p)};
+}
+async function pdfLib(){if(!window.PDFLib)throw Error("PDF library is still loading. Refresh and try again.");return PDFLib}
+function parsePages(s,max){let a=[];s.split(",").forEach(part=>{let p=part.trim();if(!p)return;if(p.includes("-")){let [x,y]=p.split("-").map(Number);for(let i=Math.max(1,x);i<=Math.min(max,y);i++)a.push(i-1)}else{let n=Number(p);if(n>=1&&n<=max)a.push(n-1)}});return [...new Set(a)]}
+async function buildTool(n){
+ let w=$("workarea"),html="";
+ const textTools=["Word Counter","Character Counter","Case Converter","Remove Duplicate Lines","Text to Slug Converter","Word Frequency Counter","Sentence Counter","Reading Time Calculator","Lorem Ipsum Generator","Text Reverser"];
+ if(textTools.includes(n)){
+  html=area("txt","Your text");
+  if(n==="Lorem Ipsum Generator")html=field("amount","Paragraphs","number","3","3");
+  html+=action("Generate result",()=>{
+   let s=$("txt")?.value||"",v="";
+   if(n==="Word Counter"){let words=s.trim()?s.trim().split(/\s+/).length:0;v=`Words: ${words}\nCharacters: ${s.length}\nCharacters (no spaces): ${s.replace(/\s/g,"").length}\nSentences: ${(s.match(/[.!?]+(?=\s|$)/g)||[]).length}\nReading time: ${Math.max(1,Math.ceil(words/200))} min`;}
+   if(n==="Character Counter")v=`Characters: ${s.length}\nWithout spaces: ${s.replace(/\s/g,"").length}\nWords: ${s.trim()?s.trim().split(/\s+/).length:0}`;
+   if(n==="Case Converter")v=`UPPERCASE:\n${s.toUpperCase()}\n\nlowercase:\n${s.toLowerCase()}\n\nTitle Case:\n${s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}`;
+   if(n==="Remove Duplicate Lines")v=[...new Set(s.split(/\r?\n/))].join("\n");
+   if(n==="Text to Slug Converter")v=s.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+   if(n==="Word Frequency Counter"){let m={};(s.toLowerCase().match(/\b[\p{L}\p{N}']+\b/gu)||[]).forEach(x=>m[x]=(m[x]||0)+1);v=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,30).map(x=>x[0]+": "+x[1]).join("\n")||"No words found."}
+   if(n==="Sentence Counter")v="Sentences: "+((s.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[]).filter(x=>x.trim()).length);
+   if(n==="Reading Time Calculator"){let c=s.trim()?s.trim().split(/\s+/).length:0;v=`${c} words · about ${Math.max(1,Math.ceil(c/200))} minute(s) at 200 words/min.`}
+   if(n==="Text Reverser")v=s.split("").reverse().join("");
+   if(n==="Lorem Ipsum Generator"){let p=Math.max(1,Math.min(20,Number($("amount").value)||3)),base="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.";v=Array.from({length:p},()=>base).join("\n\n")}
+   out(v)
+  });
+ } else if(["Percentage Calculator","Age Calculator","GST Calculator","Discount Calculator","Profit Margin Calculator","Unit Converter","Date Difference Calculator","Time Duration Calculator","Number to Words Converter","Random Number Generator"].includes(n)){
+  if(n==="Percentage Calculator")html=`<div class="row">${field("a","Percentage (%)","number","e.g. 20")}${field("b","Number","number","e.g. 500")}</div><div class="row">${field("c","Value","number","e.g. 25")}${field("d","Total","number","e.g. 100")}</div>`;
+  if(n==="Age Calculator")html=field("dob","Date of birth","date");
+  if(n==="GST Calculator")html=`<div class="row">${field("amt","Amount (₹)","number","1000")}${field("rate","GST rate (%)","number","18","18")}</div><label>Amount type</label><select id="inclusive"><option value="no">Amount excludes GST</option><option value="yes">Amount includes GST</option></select>`;
+  if(n==="Discount Calculator")html=`<div class="row">${field("amt","Original price","number","1000")}${field("rate","Discount (%)","number","20")}</div>`;
+  if(n==="Profit Margin Calculator")html=`<div class="row">${field("sell","Selling price","number","1000")}${field("cost","Cost","number","600")}</div>`;
+  if(n==="Unit Converter")html=`<div class="row">${field("val","Value","number","1")}<div><label>Convert</label><select id="unit"><option value="km-mi">Kilometres → Miles</option><option value="mi-km">Miles → Kilometres</option><option value="kg-lb">Kilograms → Pounds</option><option value="lb-kg">Pounds → Kilograms</option><option value="cm-in">Centimetres → Inches</option><option value="in-cm">Inches → Centimetres</option><option value="c-f">Celsius → Fahrenheit</option><option value="f-c">Fahrenheit → Celsius</option><option value="l-g">Litres → US gallons</option><option value="g-l">US gallons → Litres</option></select></div></div>`;
+  if(n==="Date Difference Calculator")html=`<div class="row">${field("d1","Start date","date")}${field("d2","End date","date")}</div>`;
+  if(n==="Time Duration Calculator")html=`<div class="row">${field("t1","Start time","time")}${field("t2","End time","time")}</div>`;
+  if(n==="Number to Words Converter")html=field("num","Whole number (0–999,999,999)","number","12345");
+  if(n==="Random Number Generator")html=`<div class="row">${field("min","Minimum","number","1","1")}${field("max","Maximum","number","100","100")}</div>`;
+  html+=action("Calculate",()=>{
+   const num=id=>Number($(id).value);
+   let v="";
+   if(n==="Percentage Calculator"){let a=num("a"),b=num("b"),c=num("c"),d=num("d");v=`${a}% of ${b} = ${(a*b/100).toLocaleString()}\n${c} is ${d?((c/d)*100).toFixed(2):"undefined"}% of ${d}`;}
+   if(n==="Age Calculator"){let d=new Date($("dob").value);if(isNaN(d))throw Error("Choose a valid date.");let now=new Date();let y=now.getFullYear()-d.getFullYear(),m=now.getMonth()-d.getMonth(),day=now.getDate()-d.getDate();if(day<0){m--;day+=new Date(now.getFullYear(),now.getMonth(),0).getDate()}if(m<0){y--;m+=12}v=`Age: ${y} years, ${m} months, ${day} days`;}
+   if(n==="GST Calculator"){let a=num("amt"),r=num("rate")/100,inc=$("inclusive").value==="yes";let base=inc?a/(1+r):a,tax=inc?a-base:a*r;v=`Base amount: ₹${base.toFixed(2)}\nGST: ₹${tax.toFixed(2)}\nTotal: ₹${(base+tax).toFixed(2)}`;}
+   if(n==="Discount Calculator"){let a=num("amt"),r=num("rate");v=`You save: ${(a*r/100).toFixed(2)}\nFinal price: ${(a-a*r/100).toFixed(2)}`;}
+   if(n==="Profit Margin Calculator"){let s=num("sell"),c=num("cost"),p=s-c;v=`Gross profit: ${p.toFixed(2)}\nProfit margin: ${s?((p/s)*100).toFixed(2):"—"}%\nMarkup: ${c?((p/c)*100).toFixed(2):"—"}%`;}
+   if(n==="Unit Converter"){let x=num("val"),u=$("unit").value,fn={"km-mi":x=>x*.621371,"mi-km":x=>x/ .621371,"kg-lb":x=>x*2.20462,"lb-kg":x=>x/2.20462,"cm-in":x=>x/2.54,"in-cm":x=>x*2.54,"c-f":x=>x*9/5+32,"f-c":x=>(x-32)*5/9,"l-g":x=>x*.264172,"g-l":x=>x/ .264172};v=`Result: ${fn[u](x).toFixed(4)}`;}
+   if(n==="Date Difference Calculator"){let a=new Date($("d1").value),b=new Date($("d2").value);if(isNaN(a)||isNaN(b))throw Error("Choose both dates.");v=`Difference: ${Math.abs(Math.round((b-a)/86400000))} days`;}
+   if(n==="Time Duration Calculator"){let a=$("t1").value.split(":").map(Number),b=$("t2").value.split(":").map(Number);if(!a.length||!b.length)throw Error("Choose both times.");let m=(b[0]*60+b[1])-(a[0]*60+a[1]);if(m<0)m+=1440;v=`Duration: ${Math.floor(m/60)} hours ${m%60} minutes`;}
+   if(n==="Random Number Generator"){let a=num("min"),b=num("max");if(b<a)throw Error("Maximum must be greater than minimum.");v=String(Math.floor(Math.random()*(b-a+1))+a);}
+   if(n==="Number to Words Converter"){let x=num("num");if(!Number.isInteger(x)||x<0||x>999999999)throw Error("Enter a whole number from 0 to 999,999,999.");const one=["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],ten=["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];function under(n){if(n<20)return one[n];if(n<100)return ten[Math.floor(n/10)]+(n%10?"-"+one[n%10]:"");return one[Math.floor(n/100)]+" hundred"+(n%100?" "+under(n%100):"")}function words(n){if(n<1000)return under(n);if(n<1e6)return words(Math.floor(n/1000))+" thousand"+(n%1000?" "+words(n%1000):"");return words(Math.floor(n/1e6))+" million"+(n%1e6?" "+words(n%1e6):"")}v=x===0?"zero":words(x);}
+   out(v)
+  });
+ } else if(n==="QR Code Generator"||n==="Wi-Fi QR Generator"){
+  html=n==="QR Code Generator"?field("data","Text or URL","text","https://example.com"):`
+  ${field("ssid","Wi-Fi network name (SSID)")} ${field("pass","Password","text","")}<label>Security</label><select id="security"><option>WPA</option><option>WEP</option><option value="nopass">No password</option></select><label><input id="hidden" type="checkbox" style="width:auto"> Hidden network</label>`;
+  html+=`<div id="qr" style="margin-top:16px;background:white;padding:14px;display:inline-block"></div><button class="btn" id="go">Generate QR</button><div class="output" id="out">QR code will appear here.</div>`;
+  $("go").onclick=()=>{if(!window.QRCode){out("QR library loading. Refresh and retry.");return}let s=n==="QR Code Generator"?$("data").value:`WIFI:T:${$("security").value};S:${$("ssid").value};P:${$("pass").value};H:${$("hidden").checked};;`;if(!s.trim()){out("Enter some content first.");return}$("qr").innerHTML="";new QRCode($("qr"),{text:s,width:220,height:220});out("QR code generated. Take a screenshot or save the QR image.");};
+ } else if(n==="WhatsApp Link Generator"){
+  html=`<div class="row">${field("phone","Phone number with country code","tel","919876543210")}</div>${area("msg","Optional message","Hello! I would like to know more.")}`+action("Create WhatsApp link",()=>{let p=$("phone").value.replace(/\D/g,"");if(p.length<8)throw Error("Enter a valid number with country code.");let u=`https://wa.me/${p}${$("msg").value?"?text="+encodeURIComponent($("msg").value):""}`;out(u);});
+ } else if(n==="YouTube Thumbnail Size Checker"||n==="Instagram Image Size Checker"){
+  html=`${fileInput("Upload image","image/*")}<div class="output" id="out">Choose an image to check its dimensions.</div>`;
+  $("file").onchange=async e=>{let f=e.target.files[0];if(!f)return;let im=await imgFromFile(f);let w=im.naturalWidth,h=im.naturalHeight;let good=n==="YouTube Thumbnail Size Checker"?w===1280&&h===720:(w===1080&&[1080,1350,566].includes(h));out(`${f.name}\nDimensions: ${w} × ${h} px\nAspect ratio: ${(w/h).toFixed(2)}:1\n${n==="YouTube Thumbnail Size Checker"?(w===1280&&h===720?"Matches common YouTube thumbnail size.":"Recommended YouTube thumbnail: 1280 × 720 px."):(good?"Matches a common Instagram image size.":"Common Instagram sizes include 1080×1080, 1080×1350 and 1080×566.")}`)};
+ } else if(n==="YouTube Title Generator"||n==="Instagram Caption Generator"||n==="Meta Description Generator"||n==="SERP Preview Tool"||n==="Robots.txt Generator"){
+  if(n==="Robots.txt Generator")html=`${field("site","Website URL","url","https://example.com")}${field("sitemap","Sitemap URL (optional)","url","https://example.com/sitemap.xml")}`+action("Generate robots.txt",()=>{let s=$("site").value;if(!s)throw Error("Enter your website URL.");let v=`User-agent: *\nAllow: /\nDisallow: /wp-admin/\nDisallow: /private/`;if($("sitemap").value)v+=`\n\nSitemap: ${$("sitemap").value}`;out(v);});
+  else if(n==="SERP Preview Tool")html=`${field("title","Page title","text","Your page title")}${field("url","Page URL","url","https://example.com/page")}${area("desc","Meta description","Write a concise page description...")}`+action("Preview snippet",()=>out(`${$("title").value}\n${$("url").value}\n${$("desc").value}\n\nTitle length: ${$("title").value.length} characters\nDescription length: ${$("desc").value.length} characters`));
+  else html=`${field("topic","Topic or page subject","text","e.g. easy home workouts")}${field("keyword","Main keyword (optional)","text","")}`+action("Generate ideas",()=>{let t=$("topic").value.trim(),k=$("keyword").value.trim()||t;if(!t)throw Error("Enter a topic.");let v=n==="YouTube Title Generator"?[`${t}: What You Need to Know`,`I Tried ${t} — Here's What Happened`,`7 Things Nobody Tells You About ${t}`,`The Simple Guide to ${t}`,`Stop Making These ${t} Mistakes`].join("\n"):n==="Instagram Caption Generator"?[`A little reminder about ${t} ✨`,`Here's what you should know about ${t}. Save this for later!`,`Small steps make a big difference. ${t} 💡`,`What's your experience with ${t}? Tell us below.`,`Share this with someone who needs it!`].join("\n\n"): `Learn about ${t}. Discover practical tips, helpful examples and simple steps to get started with ${k}. Explore this useful guide and find the information you need.`;out(v)});
+ }
+ else if(["Image Compressor","Image Resizer","JPG to PNG","PNG to JPG","WebP to JPG","Image Cropper","Image Rotator","Image to Base64","Image Dimension Checker","Image to PDF","JPG to PDF"].includes(n)){
+  html=fileInput("Choose image","image/*");
+  if(n==="Image Resizer")html+=`<div class="row">${field("width","Width (px)","number","800")}${field("height","Height (px)","number","600")}</div><label><input id="keep" type="checkbox" checked style="width:auto"> Keep aspect ratio</label>`;
+  if(n==="Image Compressor")html+=field("quality","Quality (1–100)","number","75","75");
+  if(n==="Image Cropper")html+=`<div class="row">${field("cw","Crop width (px)","number","500")}${field("ch","Crop height (px)","number","500")}</div>`;
+  if(n==="Image Rotator")html+=`<label>Rotation</label><select id="deg"><option value="90">90° clockwise</option><option value="180">180°</option><option value="270">270° clockwise</option></select>`;
+  html+=`<button class="btn" id="go">Process image</button><div class="output" id="out">Choose an image to begin.</div>`;
+  setupCanvasImage();
+  $("go").onclick=async()=>{if(!currentImage)throw Error("Choose an image first.");let im=currentImage,w=im.naturalWidth,h=im.naturalHeight,c=document.createElement("canvas"),ctx=c.getContext("2d"),type="image/jpeg",name="toolwise-image.jpg";
+   if(n==="Image Dimension Checker"){out(`Width: ${w}px\nHeight: ${h}px\nAspect ratio: ${(w/h).toFixed(3)}:1`);return}
+   if(n==="Image to Base64"){let f=$("file").files[0],r=new FileReader();r.onload=()=>out(String(r.result).slice(0,2500)+(String(r.result).length>2500?"… (preview truncated)":""));r.readAsDataURL(f);return}
+   if(n==="Image Resizer"){let nw=Math.max(1,Number($("width").value)||w),nh=Math.max(1,Number($("height").value)||h);if($("keep").checked){let ratio=Math.min(nw/w,nh/h);nw=Math.round(w*ratio);nh=Math.round(h*ratio)}w=nw;h=nh}
+   if(n==="Image Cropper"){let cw=Math.max(1,Math.min(w,Number($("cw").value)||w)),ch=Math.max(1,Math.min(h,Number($("ch").value)||h));c.width=cw;c.height=ch;ctx.drawImage(im,(im.naturalWidth-cw)/2,(im.naturalHeight-ch)/2,cw,ch,0,0,cw,ch)}
+   else if(n==="Image Rotator"){let d=Number($("deg").value);c.width=d%180?h:w;c.height=d%180?w:h;ctx.translate(c.width/2,c.height/2);ctx.rotate(d*Math.PI/180);ctx.drawImage(im,-w/2,-h/2)}
+   else {c.width=w;c.height=h;ctx.drawImage(im,0,0,w,h)}
+   if(n==="JPG to PNG") {type="image/png";name="converted.png"} if(n==="PNG to JPG"||n==="WebP to JPG"||n==="Image Compressor") {type="image/jpeg";name="converted.jpg"}
+   if(n==="Image Compressor"){let q=Math.max(1,Math.min(100,Number($("quality").value)||75))/100;let blob=await canvasBlob(c,type,q);downloadBlob(blob,name);out(`Compressed output: ${(blob.size/1024).toFixed(1)} KB`);return}
+   if(n==="Image to PDF"||n==="JPG to PDF"){let lib=await pdfLib(),bytes=await canvasBlob(c,"image/jpeg",.92).then(b=>b.arrayBuffer()),pdf=await lib.PDFDocument.create(),jpg=await pdf.embedJpg(bytes),page=pdf.addPage([jpg.width,jpg.height]);page.drawImage(jpg,{x:0,y:0,width:jpg.width,height:jpg.height});downloadBlob(new Blob([await pdf.save()],{type:"application/pdf"}),"image.pdf");out("PDF created and downloaded.");return}
+   let blob=await canvasBlob(c,type,.9);downloadBlob(blob,name);out(`Done. Output: ${w} × ${h}px · ${(blob.size/1024).toFixed(1)} KB`);
+  };
+ } else if(["Merge PDF","Compress PDF","Split PDF","PDF to JPG","PDF Page Extractor","Rotate PDF","Delete PDF Pages","PDF Page Calculator","PDF Metadata Viewer"].includes(n)){
+  if(n==="Merge PDF")html=fileInput("Choose PDF files (select 2 or more)","application/pdf",true);
+  else html=fileInput("Choose PDF file","application/pdf");
+  if(["Split PDF","PDF Page Extractor","Delete PDF Pages"].includes(n))html+=field("pages","Pages (e.g. 1-3,5)","text","1-3");
+  if(n==="Rotate PDF")html+=`<label>Rotation</label><select id="deg"><option value="90">90° clockwise</option><option value="180">180°</option><option value="270">270° clockwise</option></select>`;
+  html+=`<button class="btn" id="go">Process PDF</button><div class="output" id="out">Choose a PDF file.</div>`;
+  $("go").onclick=async()=>{let fs=[...$("file").files];if(!fs.length)throw Error("Choose a PDF file.");let lib=await pdfLib();
+   if(n==="Merge PDF"){if(fs.length<2)throw Error("Choose at least two PDFs.");let dst=await lib.PDFDocument.create();for(let f of fs){let src=await lib.PDFDocument.load(await readFile(f));let pages=await dst.copyPages(src,src.getPageIndices());pages.forEach(p=>dst.addPage(p))}downloadBlob(new Blob([await dst.save()],{type:"application/pdf"}),"merged.pdf");out("Merged "+fs.length+" PDFs.");return}
+   let src=await lib.PDFDocument.load(await readFile(fs[0])),count=src.getPageCount();
+   if(n==="PDF Page Calculator"){out(`Total pages: ${count}\nA 2-page print sheet estimate: ${Math.ceil(count/2)} sheets\nA 4-page print sheet estimate: ${Math.ceil(count/4)} sheets`);return}
+   if(n==="PDF Metadata Viewer"){let m=src.getTitle()||"(not set)",a=src.getAuthor()||"(not set)";out(`Pages: ${count}\nTitle: ${m}\nAuthor: ${a}\nSubject: ${src.getSubject()||"(not set)"}\nCreator: ${src.getCreator()||"(not set)"}`);return}
+   if(n==="Compress PDF"){let bytes=await src.save({useObjectStreams:true,addDefaultPage:false});downloadBlob(new Blob([bytes],{type:"application/pdf"}),"optimized.pdf");out("PDF re-saved with object streams. File size may not always decrease; this is not image downsampling.");return}
+   let dst=await lib.PDFDocument.create();
+   if(n==="PDF to JPG"){if(!window.pdfjsLib)throw Error("PDF renderer still loading. Refresh and try again.");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";let doc=await pdfjsLib.getDocument({data:await readFile(fs[0])}).promise;for(let i=1;i<=Math.min(doc.numPages,10);i++){let page=await doc.getPage(i),vp=page.getViewport({scale:1.5}),c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;let blob=await canvasBlob(c,"image/jpeg",.9);downloadBlob(blob,`page-${i}.jpg`)}out(`Rendered up to ${Math.min(doc.numPages,10)} pages as JPG. Multiple downloads may require browser permission.`);return}
+   let selected;
+   if(["Split PDF","PDF Page Extractor"].includes(n)){selected=parsePages($("pages").value,count);if(!selected.length)throw Error("Enter valid page numbers.");}
+   if(n==="Delete PDF Pages"){let del=parsePages($("pages").value,count);selected=src.getPageIndices().filter(i=>!del.includes(i));if(!selected.length)throw Error("Cannot delete every page.");}
+   if(n==="Rotate PDF")selected=src.getPageIndices();
+   let copied=await dst.copyPages(src,selected);copied.forEach(p=>dst.addPage(p));if(n==="Rotate PDF")dst.getPages().forEach(p=>p.setRotation(lib.degrees((p.getRotation().angle+Number($("deg").value))%360)));
+   downloadBlob(new Blob([await dst.save()],{type:"application/pdf"}),n.toLowerCase().replaceAll(" ","-")+".pdf");out(`Done. Exported ${selected.length} page(s).`);
+  };
+ } else {w.innerHTML="<p>This tool is being prepared.</p>";return}
+ w.innerHTML=html;
+ Object.keys(deferredEls).forEach(id=>{const el=document.getElementById(id);if(el)Object.assign(el,deferredEls[id]);});deferredEls={};
+}
+render();
+</script>
+</body></html>
