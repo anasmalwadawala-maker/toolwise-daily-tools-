@@ -193,3 +193,38 @@ async function buildTool(n){
 render();
 </script>
 </body></html>
+function showListing(){$("listing").style.display="block";$("toolview").classList.remove("active");render()}
+function openTool(name){activeTool=name;const t=tools.find(x=>x[0]===name);$("listing").style.display="none";$("toolview").classList.add("active");$("toolTitle").textContent=t[0];$("toolDesc").textContent=t[2];buildTool(name)}
+function toolSlug(name){
+ return name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+}
+function toolFromHash(){
+ const slug=decodeURIComponent(location.hash.slice(1));
+ return tools.find(t=>toolSlug(t[0])===slug);
+}
+function showListing(){
+ if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+ activeTool=null;
+ $("listing").style.display="block";
+ $("toolview").classList.remove("active");
+ render();
+}
+function openTool(name,updateUrl=true){
+ const t=tools.find(x=>x[0]===name);
+ if(!t)return;
+ activeTool=name;
+ $("listing").style.display="none";
+ $("toolview").classList.add("active");
+ $("toolTitle").textContent=t[0];
+ $("toolDesc").textContent=t[2];
+ if(updateUrl&&location.hash!=="#"+toolSlug(name)) location.hash=toolSlug(name);
+ buildTool(name);
+}
+window.addEventListener("hashchange",()=>{
+ const match=toolFromHash();
+ if(match){
+  if(activeTool!==match[0])openTool(match[0],false);
+ }else if(activeTool)showListing();
+});
+const initialTool=toolFromHash();
+if(initialTool)openTool(initialTool[0],false);
