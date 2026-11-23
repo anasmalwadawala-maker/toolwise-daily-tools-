@@ -198,11 +198,15 @@ function toolSlug(name){
  return name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 }
 function toolFromHash(){
- const slug=decodeURIComponent(location.hash.slice(1));
+ const params=new URLSearchParams(location.search);
+ const slug=(params.get("tool")||decodeURIComponent(location.hash.slice(1))).toLowerCase();
  return tools.find(t=>toolSlug(t[0])===slug);
 }
 function showListing(){
- if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+ const cleanUrl=new URL(location.href);
+ cleanUrl.searchParams.delete("tool");
+ cleanUrl.hash="";
+ history.replaceState(null,"",cleanUrl.pathname+cleanUrl.search);
  activeTool=null;
  $("listing").style.display="block";
  $("toolview").classList.remove("active");
