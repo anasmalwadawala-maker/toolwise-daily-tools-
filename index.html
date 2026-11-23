@@ -193,16 +193,18 @@ render();
 function toolSlug(name){
  return name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 }
-function toolFromHash(){
+function toolFromUrl(){
  const params=new URLSearchParams(location.search);
- const slug=(params.get("tool")||decodeURIComponent(location.hash.slice(1))).toLowerCase();
+ const slug=(params.get("tool")||"").trim().toLowerCase();
  return tools.find(t=>toolSlug(t[0])===slug);
 }
-function showListing(){
- const cleanUrl=new URL(location.href);
- cleanUrl.searchParams.delete("tool");
- cleanUrl.hash="";
- history.replaceState(null,"",cleanUrl.pathname+cleanUrl.search);
+function showListing(updateUrl=true){
+ if(updateUrl){
+  const cleanUrl=new URL(location.href);
+  cleanUrl.searchParams.delete("tool");
+  cleanUrl.hash="";
+  history.pushState({tool:null},"",cleanUrl.pathname+cleanUrl.search);
+ }
  activeTool=null;
  $("listing").style.display="block";
  $("toolview").classList.remove("active");
@@ -211,21 +213,26 @@ function showListing(){
 function openTool(name,updateUrl=true){
  const t=tools.find(x=>x[0]===name);
  if(!t)return;
+ if(updateUrl){
+  const nextUrl=new URL(location.href);
+  nextUrl.searchParams.set("tool",toolSlug(name));
+  nextUrl.hash="";
+  history.pushState({tool:toolSlug(name)},"",nextUrl.pathname+nextUrl.search);
+ }
  activeTool=name;
  $("listing").style.display="none";
  $("toolview").classList.add("active");
  $("toolTitle").textContent=t[0];
  $("toolDesc").textContent=t[2];
- if(updateUrl&&location.hash!=="#"+toolSlug(name)) location.hash=toolSlug(name);
  buildTool(name);
 }
-window.addEventListener("hashchange",()=>{
- const match=toolFromHash();
+window.addEventListener("popstate",()=>{
+ const match=toolFromUrl();
  if(match){
   if(activeTool!==match[0])openTool(match[0],false);
- }else if(activeTool)showListing();
+ }else if(activeTool)showListing(false);
 });
-const initialTool=toolFromHash();
+const initialTool=toolFromUrl();
 if(initialTool)openTool(initialTool[0],false);
 </script>
 </body></html>
