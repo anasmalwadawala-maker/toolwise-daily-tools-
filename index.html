@@ -62,8 +62,6 @@ function render(){
  $("cards").innerHTML=list.map(t=>`<article class="toolcard" data-name="${t[0]}"><span class="tag">${t[1]}</span><h3>${t[0]}</h3><p>${t[2]}</p></article>`).join("");
  $("cards").querySelectorAll(".toolcard").forEach(c=>c.onclick=()=>openTool(c.dataset.name));
 }
-function showListing(){$("listing").style.display="block";$("toolview").classList.remove("active");render()}
-function openTool(name){activeTool=name;const t=tools.find(x=>x[0]===name);$("listing").style.display="none";$("toolview").classList.add("active");$("toolTitle").textContent=t[0];$("toolDesc").textContent=t[2];buildTool(name)}
 $("back").onclick=showListing;$("search").addEventListener("input",()=>{if(activeTool)showListing();else render()});
 function field(id,label,type="text",placeholder="",value=""){return `<label>${label}</label><input id="${id}" type="${type}" placeholder="${placeholder}" value="${value}">`}
 function area(id,label,placeholder="Paste or type here..."){return `<label>${label}</label><textarea id="${id}" placeholder="${placeholder}"></textarea>`}
@@ -192,8 +190,6 @@ async function buildTool(n){
 }
 render();
 
-function showListing(){$("listing").style.display="block";$("toolview").classList.remove("active");render()}
-function openTool(name){activeTool=name;const t=tools.find(x=>x[0]===name);$("listing").style.display="none";$("toolview").classList.add("active");$("toolTitle").textContent=t[0];$("toolDesc").textContent=t[2];buildTool(name)}
 function toolSlug(name){
  return name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 }
