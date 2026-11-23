@@ -191,8 +191,7 @@ async function buildTool(n){
  Object.keys(deferredEls).forEach(id=>{const el=document.getElementById(id);if(!el)return;const props=deferredEls[id];for(const [key,value] of Object.entries(props)){if(key.toLowerCase().startsWith("on")&&typeof value==="function"){el[key]=async ev=>{try{const r=value(ev);if(r&&typeof r.then==="function")await r}catch(e){out("Something went wrong: "+(e&&e.message?e.message:String(e)))}}}else el[key]=value;}});deferredEls={};
 }
 render();
-</script>
-</body></html>
+
 function showListing(){$("listing").style.display="block";$("toolview").classList.remove("active");render()}
 function openTool(name){activeTool=name;const t=tools.find(x=>x[0]===name);$("listing").style.display="none";$("toolview").classList.add("active");$("toolTitle").textContent=t[0];$("toolDesc").textContent=t[2];buildTool(name)}
 function toolSlug(name){
@@ -228,3 +227,5 @@ window.addEventListener("hashchange",()=>{
 });
 const initialTool=toolFromHash();
 if(initialTool)openTool(initialTool[0],false);
+</script>
+</body></html>
