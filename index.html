@@ -195,7 +195,9 @@ function toolSlug(name){
 }
 function toolFromUrl(){
  const params=new URLSearchParams(location.search);
- const slug=(params.get("tool")||"").trim().toLowerCase();
+ const querySlug=(params.get("tool")||"").trim();
+ const hashSlug=decodeURIComponent((location.hash||"").replace(/^#/,"")).trim();
+ const slug=(querySlug||hashSlug).toLowerCase();
  return tools.find(t=>toolSlug(t[0])===slug);
 }
 function showListing(updateUrl=true){
@@ -226,12 +228,14 @@ function openTool(name,updateUrl=true){
  $("toolDesc").textContent=t[2];
  buildTool(name);
 }
-window.addEventListener("popstate",()=>{
+function syncToolRoute(){
  const match=toolFromUrl();
  if(match){
   if(activeTool!==match[0])openTool(match[0],false);
  }else if(activeTool)showListing(false);
-});
+}
+window.addEventListener("popstate",syncToolRoute);
+window.addEventListener("hashchange",syncToolRoute);
 const initialTool=toolFromUrl();
 if(initialTool)openTool(initialTool[0],false);
 </script>
