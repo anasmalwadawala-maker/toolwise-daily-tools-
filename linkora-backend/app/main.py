@@ -55,6 +55,8 @@ def validate_public_url(raw_url: str) -> str:
         if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
             raise ValueError("Enter a valid public HTTP or HTTPS media URL")
         host = parsed.hostname.rstrip(".").lower()
+        if host == "youtu.be" or host.endswith((".youtube.com", ".youtube-nocookie.com")) or host == "youtube.com":
+            raise ValueError("Use YouTube Studio or Google Takeout for your own uploads; LINKORA does not extract YouTube streams")
         if host in {"localhost", "localhost.localdomain"} or host.endswith((".localhost", ".local", ".internal", ".test", ".invalid")):
             raise ValueError("Private and local network addresses are not allowed")
         try:
