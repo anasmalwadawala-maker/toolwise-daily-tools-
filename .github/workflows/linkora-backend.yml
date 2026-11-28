@@ -25,3 +25,5 @@ jobs:
         run: python -m compileall -q linkora-backend/app
       - name: Run security tests
         run: python -m unittest discover -s linkora-backend/tests -v
+      - name: Build backend Docker image
+        run: docker build -t linkora-backend-test ./linkora-backend
