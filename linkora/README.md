@@ -19,7 +19,7 @@ This is a direct-file downloader using a static front end plus a Cloudflare Page
 No DRM, paywall, login, private-content or access-control bypass is implemented. Only save content you own, have permission to download, or that the publisher expressly offers. The 100 MiB limit is a browser-memory safeguard, not a promise that every supported file will download successfully.
 
 ## Run locally
-The interface can be opened as a static page, but actual downloads require the Pages Function at `functions/api/download.js`. Deploy the `linkora` directory to Cloudflare Pages (no build command; output directory `.`) to test the complete app.
+The interface can be opened as a static page, but actual downloads require the Pages Function at `functions/api/download.js`. Deploy the `linkora` directory as the Cloudflare Pages project root (no build command; output directory `.`). With that root selected, the function must appear in the deployment at `/functions/api/download.js` and is served at `/api/download`.
 
 ## QA checklist before deployment
 - [ ] Valid public direct MP4, MP3, JPG, PNG, PDF and ZIP URLs through `/api/download`.
