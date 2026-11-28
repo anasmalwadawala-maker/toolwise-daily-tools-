@@ -59,12 +59,12 @@ function isFileResponse(response, url) {
        "application/epub+zip","application/x-7z-compressed","application/vnd.android.package-archive"].includes(type)) return true;
   return FILE_EXTENSIONS.has(ext);
 }
-async function fetchPublic(url, method) {
+async function fetchPublic(url, method, useRange = false) {
   let current = validateUrl(url);
   for (let hop = 0; hop <= 5; hop++) {
     const response = await fetch(current.href, {
       method, redirect: "manual",
-      headers: method === "GET" ? { "Accept": "*/*" } : {}
+      headers: method === "GET" ? (useRange ? { "Accept": "*/*", "Range": "bytes=0-0" } : { "Accept": "*/*" }) : {}
     });
     if ([301,302,303,307,308].includes(response.status)) {
       const location = response.headers.get("location");
@@ -105,7 +105,7 @@ export async function onRequest({ request }) {
   try {
     let { response: upstream, finalUrl } = await fetchPublic(raw, request.method);
     if ((upstream.status === 405 || upstream.status === 501) && request.method === "HEAD") {
-      const ranged = await fetchPublic(raw, "GET");
+      const ranged = await fetchPublic(raw, "GET", true);
       upstream = ranged.response;
       finalUrl = ranged.finalUrl;
       if (upstream.body) await upstream.body.cancel();
