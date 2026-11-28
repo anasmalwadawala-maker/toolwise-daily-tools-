@@ -11,7 +11,7 @@ A lightweight, mobile-first direct media-link checker and downloader interface, 
 - Sanitizes the suggested download filename, preferring a safe Content-Disposition filename when exposed by the server.
 - Streams supported direct files through the Cloudflare Pages Function so the browser downloads from LINKORA's own origin instead of being sent to the source URL when CORS blocks browser access.
 - Supports common video, audio, image and document extensions.
-- No account, link history, server upload, cookies or platform credentials.
+- No account, persistent file storage, download history, cookies or platform credentials. The pasted URL is sent to the same-origin download endpoint; the requested public file is streamed through Cloudflare and is not saved by the app.
 
 ## Important limitations
 This is a direct-file downloader using a static front end plus a Cloudflare Pages Function. It can proxy publicly accessible direct media/file URLs that the upstream host permits. It is **not** a universal social-media page extractor and does not extract media from Instagram, TikTok, Facebook, X, YouTube or other protected services. A normal post/page URL is not the same as a direct media-file URL. The source host may still deny requests, require authentication, rate-limit traffic, or block automated retrieval.
