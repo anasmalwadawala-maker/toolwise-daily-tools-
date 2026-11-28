@@ -76,6 +76,13 @@ footer a{color:var(--brand);text-decoration:none}
       <label for="subtitle-languages">Subtitle languages
         <input id="subtitle-languages" type="text" value="en" maxlength="100" placeholder="en, hi" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px">
       </label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="playlist-mode" type="checkbox" style="width:auto"> Download playlist</label>
+      <label for="playlist-limit">Playlist limit (max 25)
+        <input id="playlist-limit" type="number" min="1" max="25" value="10" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px">
+      </label>
+      <label for="playlist-items">Selected item numbers (optional)
+        <input id="playlist-items" type="text" maxlength="100" placeholder="1, 3, 5" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px">
+      </label>
     </div>
     <p class="hint" id="url-hint">Direct public files use the direct-download tool. Some supported media pages can use LINKORA’s separate download engine. YouTube owner downloads use official YouTube tools.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -222,11 +229,15 @@ footer a{color:var(--brand);text-decoration:none}
  }
  function selectedEngineOptions(url,format='best'){
    const languages=(document.getElementById('subtitle-languages').value||'en').split(',').map(v=>v.trim()).filter(Boolean).slice(0,5);
+   const playlistItems=(document.getElementById('playlist-items').value||'').split(',').map(v=>Number(v.trim())).filter(v=>Number.isInteger(v)&&v>0).slice(0,25);
    return {url,format,quality:format==='mp3'?'best':document.getElementById('video-quality').value,
      subtitles:document.getElementById('want-subtitles').checked,
      automatic_subtitles:document.getElementById('want-auto-subtitles').checked,
      subtitle_languages:languages.length?languages:['en'],
-     thumbnail:document.getElementById('want-thumbnail').checked,embed_metadata:true};
+     thumbnail:document.getElementById('want-thumbnail').checked,embed_metadata:true,
+     playlist_mode:document.getElementById('playlist-mode').checked,
+     playlist_limit:Math.min(25,Math.max(1,Number(document.getElementById('playlist-limit').value)||10)),
+     playlist_items:playlistItems};
  }
  async function checkEngine(url){
    if(!window.confirm('Continue only if you own this content or are authorized to download it AND the source platform permits downloading. LINKORA does not bypass logins, DRM, paywalls or access controls. Continue?'))return;
@@ -236,7 +247,8 @@ footer a{color:var(--brand);text-decoration:none}
      const info=await engineJson('/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selectedEngineOptions(url,'best'))});
      const duration=info.duration?(' · '+Math.round(info.duration)+' seconds'):'';
      const formatCount=Array.isArray(info.formats)?info.formats.length:0;
-     show('Supported media found: '+(info.title||'Untitled media')+duration+'. '+formatCount+' format options detected. Choose a download type below.','good');
+     const collection=info.is_playlist?' Playlist detected ('+(info.playlist_count||'unknown')+' items; first 25 shown in inspection). Enable “Download playlist” to queue a maximum of 25 items.':'';
+     show('Supported media found: '+(info.title||'Untitled media')+duration+'. '+formatCount+' format options detected.'+collection+' Choose a download type below.','good');
      addEngineButton('Download video',()=>downloadViaEngine(url,'best'));
      addEngineButton('Download MP3',()=>downloadViaEngine(url,'mp3'));
      addAction('Open original page',url);
