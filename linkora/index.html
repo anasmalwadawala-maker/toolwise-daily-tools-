@@ -270,7 +270,7 @@ footer a{color:var(--brand);text-decoration:none}
      const downloadButton=document.createElement('button');downloadButton.type='button';downloadButton.textContent='Download file';downloadButton.addEventListener('click',()=>downloadFile(result.url));actions.appendChild(downloadButton);actions.hidden=false;
      addAction('Open source',result.url);
    }catch(err){
-     const msg=(err&&err.name==='TypeError')?'LINKORA's download service could not access this source.':(err.message||'The link could not be checked.');
+     const msg=(err&&err.name==='TypeError')?"LINKORA's download service could not access this source.":(err.message||'The link could not be checked.');
      show(msg+' LINKORA cannot bypass this restriction. If you trust the source and have permission, open it directly and use the publisher’s download option.','warn');
      addAction('Open original link',u.href);
    }finally{check.disabled=false;check.textContent='Check link'}
