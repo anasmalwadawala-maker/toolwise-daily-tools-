@@ -236,6 +236,8 @@ async def inspect_media(request: DownloadRequest) -> dict:
 
     def inspect() -> dict:
         options = base_ydl_options()
+        options["noplaylist"] = False
+        options["playlistend"] = 25
         options["skip_download"] = True
         with yt_dlp.YoutubeDL(options) as downloader:
             info = downloader.extract_info(url, download=False)
