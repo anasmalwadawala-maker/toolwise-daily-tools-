@@ -62,9 +62,9 @@ footer a{color:var(--brand);text-decoration:none}
 </div></header>
 <main class="wrap">
   <section class="panel downloader" aria-labelledby="download-label">
-    <label id="download-label" for="media-url">Paste a direct file URL</label>
+    <label id="download-label" for="media-url">Paste a direct file URL or YouTube link</label>
     <div class="inputrow"><input id="media-url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/media/video.mp4" aria-describedby="url-hint"><button id="check-btn" type="button">Check link</button></div>
-    <p class="hint" id="url-hint">Works with publicly accessible direct file links where the source permits retrieval. No account or file upload required.</p>
+    <p class="hint" id="url-hint">Direct public file links are downloadable here. YouTube links open official download instructions for videos uploaded to your own channel.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <div id="action-area" class="actions" hidden></div>
   </section>
@@ -81,7 +81,7 @@ footer a{color:var(--brand);text-decoration:none}
     </div>
   </section>
 
-  <section class="section note"><strong>Platform compatibility:</strong> Instagram, TikTok, Facebook, X, YouTube and other social/video services do not provide a universal public download endpoint. LINKORA does not bypass logins, private-content controls, DRM, paywalls or platform restrictions. Use each service's official download/export feature, or paste a direct file link that its publisher makes available.</section>
+  <section class="section note"><strong>YouTube owner downloads:</strong> LINKORA does not extract video streams from YouTube. For a video uploaded to your own channel, use YouTube Studio or Google Takeout to download the official MP4/export. YouTube says its Studio download is generally 720p or 360p depending on the video. For someone else’s upload, ask the creator to provide the original file or a direct download link. LINKORA never bypasses sign-in, DRM, private-content controls or platform restrictions.</section>
 
   <section class="section panel" style="padding:20px">
     <h2>Responsible downloading</h2>
@@ -90,7 +90,9 @@ footer a{color:var(--brand);text-decoration:none}
 
   <section class="section panel" style="padding:20px">
     <h2>Frequently asked questions</h2>
-    <div class="faq"><h3>Why does a social-media link not download?</h3><p>Social platforms often require authentication, signed URLs or their own download tools. LINKORA intentionally does not extract protected content or work around platform restrictions.</p></div>
+    <div class="faq"><h3>Can LINKORA download my YouTube uploads?</h3><p>LINKORA detects YouTube links and guides you to YouTube Studio or Google Takeout. You must sign in to the account that owns the channel and use YouTube’s own download/export controls. LINKORA does not fetch YouTube video streams.</p></div>
+    <div class="faq"><h3>Can I download someone else’s YouTube video if they gave permission?</h3><p>YouTube’s help page says you cannot download other users’ videos through its standard download feature. Ask the creator to send you the original file or provide a direct file link they are authorized to share.</p></div>
+    <div class="faq"><h3>Why does another social-media link not download?</h3><p>Social platforms often require authentication, signed URLs or their own download tools. LINKORA intentionally does not extract protected content or work around platform restrictions.</p></div>
     <div class="faq"><h3>Why can't LINKORA check some direct links?</h3><p>A source may deny server-side retrieval, require sign-in, rate-limit requests or block automated access. If you have permission, use the publisher’s own download option.</p></div>
     <div class="faq"><h3>Is LINKORA free?</h3><p>Yes. This version is free to use. Your browser and the file host may apply their own limits.</p></div>
     <div class="faq"><h3>Are my links stored?</h3><p>Your pasted URL is sent to LINKORA’s temporary download endpoint so it can fetch the requested public file. This app does not keep a download history or persist the file. Cloudflare processes the request to provide hosting and delivery.</p></div>
@@ -111,6 +113,14 @@ footer a{color:var(--brand);text-decoration:none}
  function addAction(label,href){const a=document.createElement('a');a.className='button secondary';a.textContent=label;a.href=href;a.rel='noopener noreferrer';a.target='_blank';actions.appendChild(a);actions.hidden=false}
  function hostMatches(host,domain){return host===domain||host.endsWith('.'+domain)}
  function isSocial(host){return socialHosts.some(d=>hostMatches(host.toLowerCase(),d))}
+ function isYouTube(host){const h=host.toLowerCase();return hostMatches(h,'youtube.com')||hostMatches(h,'youtu.be')||hostMatches(h,'youtube-nocookie.com')}
+ function showYouTubeHelp(videoUrl){
+   show('YouTube link detected. LINKORA cannot download or extract YouTube streams. If this is a video uploaded to your own channel, sign in to the owning Google account and download it through YouTube Studio, or export your uploads with Google Takeout. If another creator owns it, ask them for the original file or an authorized direct download link.','warn');
+   addAction('Open YouTube Studio','https://studio.youtube.com/');
+   addAction('Open Google Takeout','https://takeout.google.com/');
+   addAction('YouTube download instructions','https://support.google.com/youtube/answer/56100');
+   if(videoUrl)addAction('Open YouTube video',videoUrl);
+ }
  function isPrivateHost(host){
    const h=host.toLowerCase().replace(/^\[|\]$/g,'');
    if(h==='localhost'||h.endsWith('.localhost')||h.endsWith('.local'))return true;
@@ -189,6 +199,7 @@ footer a{color:var(--brand);text-decoration:none}
  async function checkLink(){
    const u=safeUrl(input.value.trim());
    if(!u){show('Enter a valid public http or https URL. Local/private network addresses are not accepted.','error');return}
+   if(isYouTube(u.hostname)){showYouTubeHelp(u.href);return}
    if(isSocial(u.hostname)){show('This appears to be a social or streaming platform link. LINKORA cannot extract media from this service or bypass its access rules. Use the platform’s official download/export option, or paste a direct media-file URL provided by the publisher.','warn');addAction('Open original page',u.href);return}
    const ext=extension(u.pathname);
    if(ext&&!fileExts.includes(ext)){show('This link ends in .'+ext+'. LINKORA only attempts common direct media and document formats. Open the original link to review its download options.','warn');addAction('Open original link',u.href);return}
