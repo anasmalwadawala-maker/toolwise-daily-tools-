@@ -29,7 +29,7 @@ export async function onRequest({ request, env }) {
     path === "/info" ||
     path === "/downloads" ||
     /^\/downloads\/[a-f0-9]{32}$/i.test(path) ||
-    /^\/downloads\/[a-f0-9]{32}\/file$/i.test(path);
+    /^\/downloads\/[a-f0-9]{32}\/(file|cancel|retry)$/i.test(path);
   if (!allowedPath) return json("Unknown download-engine endpoint.", 404);
   if (request.method !== "GET" && request.method !== "POST") {
     return json("Method not allowed.", 405);

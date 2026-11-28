@@ -64,9 +64,31 @@ footer a{color:var(--brand);text-decoration:none}
   <section class="panel downloader" aria-labelledby="download-label">
     <label id="download-label" for="media-url">Paste a direct file URL or supported media-page link</label>
     <div class="inputrow"><input id="media-url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/media/video.mp4" aria-describedby="url-hint"><button id="check-btn" type="button">Check link</button></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-top:14px">
+      <label for="video-quality">Video quality
+        <select id="video-quality" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px;background:#fff;font:inherit">
+          <option value="best">Best available</option><option value="1080">Up to 1080p</option><option value="720">Up to 720p</option><option value="480">Up to 480p</option><option value="360">Up to 360p</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="want-subtitles" type="checkbox" style="width:auto"> Subtitles</label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="want-auto-subtitles" type="checkbox" style="width:auto"> Auto captions</label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="want-thumbnail" type="checkbox" style="width:auto"> Save thumbnail</label>
+      <label for="subtitle-languages">Subtitle languages
+        <input id="subtitle-languages" type="text" value="en" maxlength="100" placeholder="en, hi" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="playlist-mode" type="checkbox" style="width:auto"> Download playlist</label>
+      <label for="playlist-limit">Playlist limit (max 25)
+        <input id="playlist-limit" type="number" min="1" max="25" value="10" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px">
+      </label>
+      <label for="playlist-items">Selected item numbers (optional)
+        <input id="playlist-items" type="text" maxlength="100" placeholder="1, 3, 5" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px">
+      </label>
+    </div>
     <p class="hint" id="url-hint">Direct public files use the direct-download tool. Some supported media pages can use LINKORA’s separate download engine. YouTube owner downloads use official YouTube tools.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <div id="action-area" class="actions" hidden></div>
+    <div class="actions"><button class="secondary" id="history-btn" type="button">View download history</button></div>
+    <div id="history-area" class="status" aria-live="polite"></div>
   </section>
 
   <section class="section">
@@ -207,15 +229,28 @@ footer a{color:var(--brand);text-decoration:none}
    if(!r.ok)throw new Error(data.detail||data.error||('Download engine returned HTTP '+r.status+'.'));
    return data;
  }
+ function selectedEngineOptions(url,format='best'){
+   const languages=(document.getElementById('subtitle-languages').value||'en').split(',').map(v=>v.trim()).filter(Boolean).slice(0,5);
+   const playlistItems=(document.getElementById('playlist-items').value||'').split(',').map(v=>Number(v.trim())).filter(v=>Number.isInteger(v)&&v>0).slice(0,25);
+   return {url,format,quality:format==='mp3'?'best':document.getElementById('video-quality').value,
+     subtitles:document.getElementById('want-subtitles').checked,
+     automatic_subtitles:document.getElementById('want-auto-subtitles').checked,
+     subtitle_languages:languages.length?languages:['en'],
+     thumbnail:document.getElementById('want-thumbnail').checked,embed_metadata:true,
+     playlist_mode:document.getElementById('playlist-mode').checked,
+     playlist_limit:Math.min(25,Math.max(1,Number(document.getElementById('playlist-limit').value)||10)),
+     playlist_items:playlistItems};
+ }
  async function checkEngine(url){
    if(!window.confirm('Continue only if you own this content or are authorized to download it AND the source platform permits downloading. LINKORA does not bypass logins, DRM, paywalls or access controls. Continue?'))return;
    check.disabled=true;check.textContent='Checking…';
    show('Checking whether LINKORA’s media engine supports this source…');
    try{
-     const info=await engineJson('/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,format:'best'})});
+     const info=await engineJson('/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selectedEngineOptions(url,'best'))});
      const duration=info.duration?(' · '+Math.round(info.duration)+' seconds'):'';
      const formatCount=Array.isArray(info.formats)?info.formats.length:0;
-     show('Supported media found: '+(info.title||'Untitled media')+duration+'. '+formatCount+' format options detected. Choose a download type below.','good');
+     const collection=info.is_playlist?' Playlist detected ('+(info.playlist_count||'unknown')+' items; first 25 shown in inspection). Enable “Download playlist” to queue a maximum of 25 items.':'';
+     show('Supported media found: '+(info.title||'Untitled media')+duration+'. '+formatCount+' format options detected.'+collection+' Choose a download type below.','good');
      addEngineButton('Download video',()=>downloadViaEngine(url,'best'));
      addEngineButton('Download MP3',()=>downloadViaEngine(url,'mp3'));
      addAction('Open original page',url);
@@ -224,28 +259,60 @@ footer a{color:var(--brand);text-decoration:none}
      addAction('Open original page',url);
    }finally{check.disabled=false;check.textContent='Check link'}
  }
+ async function loadHistory(){
+   const area=document.getElementById('history-area');
+   area.textContent='Loading temporary download history…';area.className='status show';
+   try{
+     const data=await engineJson('/downloads');
+     const items=Array.isArray(data.items)?data.items:[];
+     area.replaceChildren();
+     if(!items.length){area.textContent='No downloads in this temporary session yet.';return}
+     items.slice(0,20).forEach(item=>{
+       const row=document.createElement('div');row.style.padding='9px 0';row.style.borderBottom='1px solid var(--line)';
+       const heading=document.createElement('strong');heading.textContent=(item.title||item.filename||'Download')+' — '+item.status+' ('+(Number(item.progress)||0)+'%)';
+       row.appendChild(heading);
+       if(item.status==='finished'&&item.download_url){
+         const link=document.createElement('a');link.className='button secondary';link.textContent='Save file';link.href='/api/engine/downloads/'+encodeURIComponent(item.id)+'/file';row.appendChild(link);
+       }
+       if(item.status==='error'||item.status==='cancelled'){
+         const retry=document.createElement('button');retry.type='button';retry.className='secondary';retry.textContent='Retry';
+         retry.addEventListener('click',async()=>{retry.disabled=true;try{const next=await engineJson('/downloads/'+encodeURIComponent(item.id)+'/retry',{method:'POST'});area.textContent='Retry queued as '+next.id+'. Refresh history to follow it.';}catch(e){area.textContent=e.message||'Retry failed.'}});
+         row.appendChild(retry);
+       }
+       if(['queued','downloading','processing'].includes(item.status)){
+         const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Cancel';
+         cancel.addEventListener('click',async()=>{cancel.disabled=true;try{await engineJson('/downloads/'+encodeURIComponent(item.id)+'/cancel',{method:'POST'});heading.textContent='Cancellation requested for '+(item.title||item.id);}catch(e){heading.textContent=e.message||'Could not cancel this job.'}});
+         row.appendChild(cancel);
+       }
+       area.appendChild(row);
+     });
+   }catch(e){area.textContent=(e.message||'Could not load download history.')+' History is temporary and may reset when the free host restarts.'}
+ }
  async function downloadViaEngine(url,format){
    const buttons=actions.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
-   show(format==='mp3'?'Preparing MP3 download…':'Adding video to the download queue…');
+   show(format==='mp3'?'Preparing download…':'Adding download to the queue…');
    try{
-     const job=await engineJson('/downloads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,format})});
+     const job=await engineJson('/downloads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selectedEngineOptions(url,format))});
      if(!job.id)throw new Error('The download engine did not return a job ID.');
-     show('Download queued. Waiting for the engine…','good');
+     show('Download queued. You can cancel it from download history.','good');
      let latest=job;
      for(let attempt=0;attempt<400;attempt++){
        await new Promise(resolve=>setTimeout(resolve,1500));
        latest=await engineJson('/downloads/'+encodeURIComponent(job.id));
-       if(latest.status==='finished')break;
-       if(latest.status==='error')throw new Error(latest.error||'Download failed at the source.');
+       if(latest.status==='finished'||latest.status==='error'||latest.status==='cancelled')break;
        show('Download '+(latest.status||'queued')+' · '+(Number(latest.progress)||0)+'%'+(latest.title?' · '+latest.title:''),'good');
      }
-     if(latest.status!=='finished')throw new Error('This download is taking too long. Check again later.');
+     if(latest.status==='error')throw new Error(latest.error||'Download failed at the source.');
+     if(latest.status==='cancelled')throw new Error('Download cancelled.');
+     if(latest.status!=='finished')throw new Error('This download is taking too long. Check history later.');
      show('Your file is ready: '+(latest.filename||latest.title||'download')+'. Files are temporary and may expire.','good');
      const a=document.createElement('a');a.className='button';a.textContent='Save downloaded file';
      a.href='/api/engine/downloads/'+encodeURIComponent(job.id)+'/file';a.download=latest.filename||'linkora-download';
      actions.appendChild(a);actions.hidden=false;
+     await loadHistory();
    }catch(e){
-     show((e.message||'Download failed.')+' Try another supported source or use its official download option.','warn');
+     show((e.message||'Download failed.')+' You can retry failed jobs from download history.','warn');
+     await loadHistory();
    }finally{
      actions.querySelectorAll('button').forEach(b=>b.disabled=false);
    }
@@ -275,6 +342,7 @@ footer a{color:var(--brand);text-decoration:none}
      addAction('Open original link',u.href);
    }finally{check.disabled=false;check.textContent='Check link'}
  }
+ document.getElementById('history-btn').addEventListener('click',loadHistory);
  check.addEventListener('click',checkLink);
  input.addEventListener('keydown',e=>{if(e.key==='Enter')checkLink()});
 })();
