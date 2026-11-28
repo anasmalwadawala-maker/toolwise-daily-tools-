@@ -138,6 +138,11 @@ def base_ydl_options() -> dict:
 def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
     job_dir = DOWNLOAD_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
+    if cancel_events.get(job_id, threading.Event()).is_set():
+        with jobs_lock:
+            if job_id in jobs:
+                jobs[job_id].update(status="cancelled", error="Download cancelled", finished_at=time.time())
+        return
 
     def progress_hook(data: dict) -> None:
         if cancel_events.get(job_id, threading.Event()).is_set():
