@@ -39,6 +39,24 @@ download_semaphore = threading.Semaphore(1)
 class DownloadRequest(BaseModel):
     url: str = Field(min_length=8, max_length=2048)
     format: str = "best"
+    quality: str = "best"
+    subtitles: bool = False
+    automatic_subtitles: bool = False
+    subtitle_languages: list[str] = Field(default_factory=lambda: ["en"], max_length=5)
+    thumbnail: bool = False
+    embed_metadata: bool = True
+
+
+def validate_options(request: DownloadRequest) -> None:
+    if request.format not in {"best", "mp3"}:
+        raise HTTPException(status_code=400, detail="Unsupported output format")
+    if request.quality not in {"best", "1080", "720", "480", "360"}:
+        raise HTTPException(status_code=400, detail="Unsupported video quality")
+    if request.format == "mp3" and request.quality != "best":
+        raise HTTPException(status_code=400, detail="Video quality does not apply to MP3")
+    for language in request.subtitle_languages:
+        if not language or len(language) > 20 or not all(c.isalnum() or c in "-_*" for c in language):
+            raise HTTPException(status_code=400, detail="Invalid subtitle language")
 
 
 def require_api_key(x_linkora_api_key: str | None = Header(default=None)) -> None:
@@ -106,7 +124,7 @@ def base_ydl_options() -> dict:
     }
 
 
-def run_download(job_id: str, url: str, output_format: str) -> None:
+def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
     job_dir = DOWNLOAD_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
 
@@ -128,9 +146,26 @@ def run_download(job_id: str, url: str, output_format: str) -> None:
     options = base_ydl_options()
     options["outtmpl"] = str(job_dir / "%(title).80s-%(id)s.%(ext)s")
     options["progress_hooks"] = [progress_hook]
-    options["format"] = "bestvideo*+bestaudio/best" if output_format == "best" else "bestaudio/best"
-    if output_format == "mp3":
+    if request.format == "mp3":
+        options["format"] = "bestaudio/best"
         options["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]
+    else:
+        height = request.quality
+        if height == "best":
+            options["format"] = "bestvideo*+bestaudio/best"
+        else:
+            options["format"] = f"bestvideo[height<={height}]+bestaudio/best[height<={height}]/best"
+    if request.subtitles:
+        options["writesubtitles"] = True
+        options["subtitleslangs"] = request.subtitle_languages
+        options["subtitlesformat"] = "best"
+    if request.automatic_subtitles:
+        options["writeautomaticsub"] = True
+        options["subtitleslangs"] = request.subtitle_languages
+    if request.thumbnail:
+        options["writethumbnail"] = True
+    if request.embed_metadata:
+        options["addmetadata"] = True
 
     try:
         with download_semaphore:
@@ -163,8 +198,7 @@ def health() -> dict:
 
 @app.post("/api/info", dependencies=[Depends(require_api_key)])
 async def inspect_media(request: DownloadRequest) -> dict:
-    if request.format not in {"best", "mp3"}:
-        raise HTTPException(status_code=400, detail="Unsupported output format")
+    validate_options(request)
     url = validate_public_url(request.url)
 
     def inspect() -> dict:
@@ -183,7 +217,12 @@ async def inspect_media(request: DownloadRequest) -> dict:
                             "has_video": item.get("vcodec") not in (None, "none")})
         return {"title": info.get("title"), "duration": info.get("duration"),
                 "thumbnail": info.get("thumbnail"), "extractor": info.get("extractor_key") or info.get("extractor"),
-                "formats": formats}
+                "formats": formats, "subtitles": sorted((info.get("subtitles") or {}).keys()),
+                "automatic_subtitles": sorted((info.get("automatic_captions") or {}).keys()),
+                "is_playlist": bool(info.get("_type") in {"playlist", "multi_video"}),
+                "playlist_count": info.get("playlist_count") or len(info.get("entries") or []),
+                "playlist_preview": [{"title": item.get("title"), "id": item.get("id")}
+                                     for item in (info.get("entries") or [])[:25] if isinstance(item, dict)]}
 
     try:
         return await asyncio.to_thread(inspect)
@@ -193,8 +232,7 @@ async def inspect_media(request: DownloadRequest) -> dict:
 
 @app.post("/api/downloads", status_code=202, dependencies=[Depends(require_api_key)])
 def create_download(request: DownloadRequest, background_tasks: BackgroundTasks) -> dict:
-    if request.format not in {"best", "mp3"}:
-        raise HTTPException(status_code=400, detail="Unsupported output format")
+    validate_options(request)
     prune_old_jobs()
     url = validate_public_url(request.url)
     with jobs_lock:
@@ -202,9 +240,10 @@ def create_download(request: DownloadRequest, background_tasks: BackgroundTasks)
         if active >= MAX_ACTIVE_JOBS:
             raise HTTPException(status_code=429, detail="Download queue is full. Try again shortly.")
         job_id = uuid.uuid4().hex
-        job = {"id": job_id, "status": "queued", "progress": 0, "created_at": time.time(), "format": request.format}
+        job = {"id": job_id, "status": "queued", "progress": 0, "created_at": time.time(),
+               "format": request.format, "quality": request.quality}
         jobs[job_id] = job
-    background_tasks.add_task(run_download, job_id, url, request.format)
+    background_tasks.add_task(run_download, job_id, url, request)
     return public_job(job)
 
 
