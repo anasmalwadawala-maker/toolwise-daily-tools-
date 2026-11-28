@@ -15,6 +15,10 @@ class UrlValidationTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             validate_public_url("file:///etc/passwd")
 
+    def test_rejects_youtube_for_official_owner_export(self):
+        with self.assertRaises(HTTPException):
+            validate_public_url("https://youtu.be/example")
+
     def test_rejects_localhost(self):
         with self.assertRaises(HTTPException):
             validate_public_url("http://localhost/private")
