@@ -206,7 +206,7 @@ class DownloadLifecycleTests(unittest.TestCase):
                                     "created_at": time.time(), "file_path": str(media),
                                     "filename": media.name}
         response = get_download_file(job_id)
-        self.assertEqual(response.path, str(media))
+        self.assertEqual(Path(response.path), media)
 
 
 class ApiKeyTests(unittest.TestCase):
