@@ -1,11 +1,14 @@
 import os
 import socket
 import sys
+import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from app import main as linkora_main
 from app.main import DownloadRequest, require_api_key, validate_options, validate_public_url
 from fastapi import HTTPException
 
@@ -86,6 +89,41 @@ class DownloadOptionTests(unittest.TestCase):
     def test_rejects_playlist_limit_over_cap(self):
         with self.assertRaises(Exception):
             DownloadRequest(url="https://example.com/list", playlist_mode=True, playlist_limit=26)
+
+
+class HistoryPersistenceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.original_db = linkora_main.HISTORY_DB_PATH
+        linkora_main.HISTORY_DB_PATH = Path(self.temp_dir.name) / "history.sqlite3"
+        linkora_main.jobs.clear()
+        linkora_main.cancel_events.clear()
+
+    def tearDown(self):
+        linkora_main.jobs.clear()
+        linkora_main.cancel_events.clear()
+        linkora_main.HISTORY_DB_PATH = self.original_db
+        self.temp_dir.cleanup()
+
+    def test_persists_and_restores_finished_history(self):
+        job = {"id": "a" * 32, "status": "finished", "progress": 100,
+               "created_at": time.time(), "finished_at": time.time(),
+               "title": "Example", "filename": "example.mp4",
+               "file_path": str(Path(self.temp_dir.name) / "missing.mp4")}
+        linkora_main.persist_job(job)
+        linkora_main.restore_jobs()
+        restored = linkora_main.jobs[job["id"]]
+        self.assertEqual(restored["title"], "Example")
+        self.assertEqual(restored["status"], "expired")
+
+    def test_marks_in_progress_jobs_interrupted_after_restart(self):
+        job = {"id": "b" * 32, "status": "downloading", "progress": 35,
+               "created_at": time.time()}
+        linkora_main.persist_job(job)
+        linkora_main.restore_jobs()
+        restored = linkora_main.jobs[job["id"]]
+        self.assertEqual(restored["status"], "error")
+        self.assertIn("restarted", restored["error"])
 
 
 class ApiKeyTests(unittest.TestCase):
