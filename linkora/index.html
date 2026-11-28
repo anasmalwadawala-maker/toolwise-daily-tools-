@@ -64,6 +64,19 @@ footer a{color:var(--brand);text-decoration:none}
   <section class="panel downloader" aria-labelledby="download-label">
     <label id="download-label" for="media-url">Paste a direct file URL or supported media-page link</label>
     <div class="inputrow"><input id="media-url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/media/video.mp4" aria-describedby="url-hint"><button id="check-btn" type="button">Check link</button></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-top:14px">
+      <label for="video-quality">Video quality
+        <select id="video-quality" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px;background:#fff;font:inherit">
+          <option value="best">Best available</option><option value="1080">Up to 1080p</option><option value="720">Up to 720p</option><option value="480">Up to 480p</option><option value="360">Up to 360p</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="want-subtitles" type="checkbox" style="width:auto"> Subtitles</label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="want-auto-subtitles" type="checkbox" style="width:auto"> Auto captions</label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0"><input id="want-thumbnail" type="checkbox" style="width:auto"> Save thumbnail</label>
+      <label for="subtitle-languages">Subtitle languages
+        <input id="subtitle-languages" type="text" value="en" maxlength="100" placeholder="en, hi" style="display:block;width:100%;padding:11px;border:1px solid #d8deea;border-radius:10px">
+      </label>
+    </div>
     <p class="hint" id="url-hint">Direct public files use the direct-download tool. Some supported media pages can use LINKORA’s separate download engine. YouTube owner downloads use official YouTube tools.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <div id="action-area" class="actions" hidden></div>
@@ -207,12 +220,20 @@ footer a{color:var(--brand);text-decoration:none}
    if(!r.ok)throw new Error(data.detail||data.error||('Download engine returned HTTP '+r.status+'.'));
    return data;
  }
+ function selectedEngineOptions(url,format='best'){
+   const languages=(document.getElementById('subtitle-languages').value||'en').split(',').map(v=>v.trim()).filter(Boolean).slice(0,5);
+   return {url,format,quality:format==='mp3'?'best':document.getElementById('video-quality').value,
+     subtitles:document.getElementById('want-subtitles').checked,
+     automatic_subtitles:document.getElementById('want-auto-subtitles').checked,
+     subtitle_languages:languages.length?languages:['en'],
+     thumbnail:document.getElementById('want-thumbnail').checked,embed_metadata:true};
+ }
  async function checkEngine(url){
    if(!window.confirm('Continue only if you own this content or are authorized to download it AND the source platform permits downloading. LINKORA does not bypass logins, DRM, paywalls or access controls. Continue?'))return;
    check.disabled=true;check.textContent='Checking…';
    show('Checking whether LINKORA’s media engine supports this source…');
    try{
-     const info=await engineJson('/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,format:'best'})});
+     const info=await engineJson('/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selectedEngineOptions(url,'best'))});
      const duration=info.duration?(' · '+Math.round(info.duration)+' seconds'):'';
      const formatCount=Array.isArray(info.formats)?info.formats.length:0;
      show('Supported media found: '+(info.title||'Untitled media')+duration+'. '+formatCount+' format options detected. Choose a download type below.','good');
@@ -228,7 +249,7 @@ footer a{color:var(--brand);text-decoration:none}
    const buttons=actions.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
    show(format==='mp3'?'Preparing MP3 download…':'Adding video to the download queue…');
    try{
-     const job=await engineJson('/downloads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,format})});
+     const job=await engineJson('/downloads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selectedEngineOptions(url,format))});
      if(!job.id)throw new Error('The download engine did not return a job ID.');
      show('Download queued. Waiting for the engine…','good');
      let latest=job;
