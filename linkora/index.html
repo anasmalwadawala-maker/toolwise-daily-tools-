@@ -108,7 +108,7 @@ footer a{color:var(--brand);text-decoration:none}
  const fileExts=['mp4','webm','mov','m4v','mp3','wav','m4a','ogg','flac','jpg','jpeg','png','webp','gif','avif','pdf','txt','csv','docx','xlsx','pptx','zip'];
  const socialHosts=['instagram.com','tiktok.com','facebook.com','fb.watch','x.com','twitter.com','youtube.com','youtu.be','vimeo.com','twitch.tv','soundcloud.com','pinterest.com','reddit.com'];
  function show(message,kind=''){status.textContent=message;status.className='status show '+kind;actions.replaceChildren();actions.hidden=true}
- function addAction(label,href){const a=document.createElement('a');a.className='button';a.textContent=label;a.href=href;a.rel='noopener noreferrer';a.target='_blank';actions.appendChild(a);actions.hidden=false}
+ function addAction(label,href){const a=document.createElement('a');a.className='button secondary';a.textContent=label;a.href=href;a.rel='noopener noreferrer';a.target='_blank';actions.appendChild(a);actions.hidden=false}
  function hostMatches(host,domain){return host===domain||host.endsWith('.'+domain)}
  function isSocial(host){return socialHosts.some(d=>hostMatches(host.toLowerCase(),d))}
  function isPrivateHost(host){
