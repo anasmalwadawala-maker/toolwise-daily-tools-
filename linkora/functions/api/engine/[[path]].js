@@ -1,6 +1,4 @@
 const PREFIX = "/api/engine";
-const JOB_ID = /^[a-f0-9]{32}$/i;
-
 function json(message, status) {
   return new Response(JSON.stringify({ error: message }), {
     status,
@@ -49,7 +47,10 @@ export async function onRequest({ request, env }) {
   if (accept) headers.set("accept", accept);
 
   let body;
-  if (request.method === "POST") body = await request.arrayBuffer();
+  if (request.method === "POST") {
+    body = await request.arrayBuffer();
+    if (body.byteLength > 10000) return json("Request is too large.", 413);
+  }
 
   try {
     const upstream = await fetch(target.toString(), {
