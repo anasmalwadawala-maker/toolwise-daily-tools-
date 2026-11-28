@@ -28,6 +28,6 @@ jobs:
       - name: Check Cloudflare proxy JavaScript syntax
         run: node --check "linkora/functions/api/engine/[[path]].js"
       - name: Check LINKORA frontend JavaScript syntax
-        run: node --check <(sed -n '/<script>/,/<\/script>/p' linkora/index.html | sed '1d;$d')
+        run: sed -n '/<script>/,/<\/script>/p' linkora/index.html | sed '1d;$d' | node --check
       - name: Build backend Docker image
         run: docker build -t linkora-backend-test ./linkora-backend
