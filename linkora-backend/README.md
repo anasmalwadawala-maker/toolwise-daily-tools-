@@ -42,6 +42,16 @@ A Render free web service can run a Docker container, but it spins down after 15
 
 The included render.yaml is a deployment blueprint, not a deployed service. Do not deploy publicly until the API is placed behind a trusted same-origin proxy, secrets are configured, abuse controls and network-egress protections are reviewed, and real download tests are completed. Never put LINKORA_API_KEY in browser JavaScript or a public repository.
 
+
+## Connect the backend to the LINKORA preview
+
+After creating the Render service, keep it private to preview use. In the Cloudflare Pages project for LINKORA, add these as **Preview** environment variables only:
+
+- LINKORA_BACKEND_URL: the HTTPS origin of the Render service (no path suffix).
+- LINKORA_API_KEY: the same strong random secret configured in the Render service.
+
+The Pages Function at linkora/functions/api/engine/[[path]].js injects the secret server-side. The browser never receives the API key. Do not set Production variables or enable production deployments while the public launch is on hold. Re-deploy the allowed preview branch only after the backend and secrets are configured.
+
 ## Security notes and remaining work
 
 - The API requires a secret key and validates the submitted URL and its DNS answers before extraction.
