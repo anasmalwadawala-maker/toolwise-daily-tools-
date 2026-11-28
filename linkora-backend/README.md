@@ -10,6 +10,7 @@ A separate, independently written FastAPI service for LINKORA. It uses the yt-dl
 - Queue status at GET /api/downloads and GET /api/downloads/{id}.
 - File retrieval at GET /api/downloads/{id}/file.
 - Video/audio selection (best or MP3), progress updates, a 500 MiB default file cap and a small queue.
+- YouTube URLs are intentionally rejected; use YouTube Studio or Google Takeout for your own uploads.
 - No cookie import, browser-session access, login automation, DRM removal, paywall bypass or private-content access.
 
 This is a backend foundation, not a promise that every platform or URL will work. Extractors change and individual services can block or prohibit downloading. Only use it for content you own, are authorized to download, or that the source expressly makes available for download. A creator's permission does not automatically override a platform's terms.
