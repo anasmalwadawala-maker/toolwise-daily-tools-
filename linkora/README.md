@@ -40,7 +40,7 @@ Do not mark any test as passed until it has been run against a deployed preview 
 2. Use the `linkora/reliability-hardening` branch for a preview deployment. The Cloudflare preview project is restricted to this branch, with production deployments disabled.
 3. Set the project root directory to `linkora`.
 4. Leave the build command blank; set the output directory to the project root itself (`.`).
-5. Deploy a preview and test the resulting `*.pages.dev` URL on mobile and desktop.
+5. Deploy a preview and test the resulting `*.pages.dev` URL on mobile and desktop. Confirm the deployment reports that it includes Pages Functions before testing `/api/download`.
 6. Only after testing and separate launch approval, merge to `main` and configure production.
 
 Cloudflare Pages plan limits can change; check the current official limits before launch: https://developers.cloudflare.com/pages/platform/limits/
