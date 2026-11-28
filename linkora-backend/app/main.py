@@ -9,6 +9,7 @@ import socket
 import threading
 import time
 import uuid
+import zipfile
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -33,6 +34,7 @@ if allowed_origins:
 
 jobs: dict[str, dict] = {}
 jobs_lock = threading.RLock()
+cancel_events: dict[str, threading.Event] = {}
 download_semaphore = threading.Semaphore(1)
 
 
@@ -45,6 +47,9 @@ class DownloadRequest(BaseModel):
     subtitle_languages: list[str] = Field(default_factory=lambda: ["en"], max_length=5)
     thumbnail: bool = False
     embed_metadata: bool = True
+    playlist_mode: bool = False
+    playlist_limit: int = Field(default=10, ge=1, le=25)
+    playlist_items: list[int] = Field(default_factory=list, max_length=25)
 
 
 def validate_options(request: DownloadRequest) -> None:
@@ -57,6 +62,12 @@ def validate_options(request: DownloadRequest) -> None:
     for language in request.subtitle_languages:
         if not language or len(language) > 20 or not all(c.isalnum() or c in "-_*" for c in language):
             raise HTTPException(status_code=400, detail="Invalid subtitle language")
+    if any(item < 1 or item > 10000 for item in request.playlist_items):
+        raise HTTPException(status_code=400, detail="Playlist item numbers must be between 1 and 10000")
+    if len(set(request.playlist_items)) != len(request.playlist_items):
+        raise HTTPException(status_code=400, detail="Duplicate playlist item numbers are not allowed")
+    if request.playlist_items and not request.playlist_mode:
+        raise HTTPException(status_code=400, detail="Enable playlist mode before selecting playlist items")
 
 
 def require_api_key(x_linkora_api_key: str | None = Header(default=None)) -> None:
@@ -129,6 +140,8 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
     job_dir.mkdir(parents=True, exist_ok=True)
 
     def progress_hook(data: dict) -> None:
+        if cancel_events.get(job_id, threading.Event()).is_set():
+            raise yt_dlp.utils.DownloadError("Download cancelled by user")
         with jobs_lock:
             job = jobs.get(job_id)
             if not job:
@@ -144,6 +157,12 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
                 job["progress"] = 99
 
     options = base_ydl_options()
+    options["noplaylist"] = not request.playlist_mode
+    if request.playlist_mode:
+        options["playlistend"] = request.playlist_limit
+        options["max_downloads"] = request.playlist_limit
+        if request.playlist_items:
+            options["playlist_items"] = ",".join(str(item) for item in request.playlist_items)
     options["outtmpl"] = str(job_dir / "%(title).80s-%(id)s.%(ext)s")
     options["progress_hooks"] = [progress_hook]
     if request.format == "mp3":
@@ -172,11 +191,24 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
             with yt_dlp.YoutubeDL(options) as downloader:
                 info = downloader.extract_info(url, download=True)
                 title = info.get("title") if isinstance(info, dict) else None
+            if cancel_events.get(job_id, threading.Event()).is_set():
+                raise RuntimeError("Download cancelled by user")
             candidates = [p for p in job_dir.iterdir() if p.is_file()
-                          and not p.name.endswith((".part", ".ytdl", ".temp"))]
+                          and not p.name.endswith((".part", ".ytdl", ".temp"))
+                          and not p.suffix.lower() in {".vtt", ".srt", ".ass", ".lrc", ".jpg", ".jpeg", ".png", ".webp"}]
             if not candidates:
                 raise RuntimeError("The source did not produce a downloadable file")
-            file_path = max(candidates, key=lambda item: item.stat().st_size)
+            total_bytes = sum(p.stat().st_size for p in candidates)
+            if total_bytes > MAX_FILE_BYTES:
+                raise RuntimeError("The combined download exceeds the configured size limit")
+            if len(candidates) > 1:
+                archive = job_dir / "linkora-playlist.zip"
+                with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+                    for item in candidates:
+                        bundle.write(item, arcname=item.name)
+                file_path = archive
+            else:
+                file_path = candidates[0]
             if file_path.stat().st_size > MAX_FILE_BYTES:
                 file_path.unlink(missing_ok=True)
                 raise RuntimeError("The file exceeds the configured size limit")
@@ -187,7 +219,8 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
     except Exception as exc:
         with jobs_lock:
             if job_id in jobs:
-                jobs[job_id].update(status="error", error=str(exc)[:500], finished_at=time.time())
+                cancelled = cancel_events.get(job_id, threading.Event()).is_set() or "cancelled by user" in str(exc).lower()
+                jobs[job_id].update(status="cancelled" if cancelled else "error", error=("Download cancelled" if cancelled else str(exc)[:500]), finished_at=time.time())
 
 
 @app.get("/health")
@@ -241,10 +274,45 @@ def create_download(request: DownloadRequest, background_tasks: BackgroundTasks)
             raise HTTPException(status_code=429, detail="Download queue is full. Try again shortly.")
         job_id = uuid.uuid4().hex
         job = {"id": job_id, "status": "queued", "progress": 0, "created_at": time.time(),
-               "format": request.format, "quality": request.quality}
+               "format": request.format, "quality": request.quality, "request": request.model_dump()}
         jobs[job_id] = job
+        cancel_events[job_id] = threading.Event()
     background_tasks.add_task(run_download, job_id, url, request)
     return public_job(job)
+
+
+@app.post("/api/downloads/{job_id}/cancel", dependencies=[Depends(require_api_key)])
+def cancel_download(job_id: str) -> dict:
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Download not found or expired")
+        if job.get("status") in {"finished", "error", "cancelled"}:
+            raise HTTPException(status_code=409, detail="This download can no longer be cancelled")
+        cancel_events.setdefault(job_id, threading.Event()).set()
+        job["status"] = "cancelling"
+        return public_job(job)
+
+
+@app.post("/api/downloads/{job_id}/retry", status_code=202, dependencies=[Depends(require_api_key)])
+def retry_download(job_id: str, background_tasks: BackgroundTasks) -> dict:
+    with jobs_lock:
+        old = jobs.get(job_id)
+        if not old:
+            raise HTTPException(status_code=404, detail="Download not found or expired")
+        if old.get("status") not in {"error", "cancelled"} or not old.get("request"):
+            raise HTTPException(status_code=409, detail="Only failed or cancelled downloads can be retried")
+        active = sum(1 for item in jobs.values() if item["status"] in {"queued", "downloading", "processing", "cancelling"})
+        if active >= MAX_ACTIVE_JOBS:
+            raise HTTPException(status_code=429, detail="Download queue is full. Try again shortly.")
+        request = DownloadRequest(**old["request"])
+        new_id = uuid.uuid4().hex
+        new_job = {"id": new_id, "status": "queued", "progress": 0, "created_at": time.time(),
+                   "format": request.format, "quality": request.quality, "request": request.model_dump()}
+        jobs[new_id] = new_job
+        cancel_events[new_id] = threading.Event()
+    background_tasks.add_task(run_download, new_id, validate_public_url(request.url), request)
+    return public_job(new_job)
 
 
 @app.get("/api/downloads", dependencies=[Depends(require_api_key)])
@@ -274,3 +342,4 @@ def get_download_file(job_id: str):
         if not path.is_file() or path.parent.resolve() != (DOWNLOAD_DIR / job_id).resolve():
             raise HTTPException(status_code=404, detail="Downloaded file is no longer available")
         return FileResponse(path, filename=job.get("filename") or path.name)
+
