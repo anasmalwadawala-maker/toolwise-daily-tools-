@@ -332,7 +332,7 @@ def create_download(request: DownloadRequest, background_tasks: BackgroundTasks)
     prune_old_jobs()
     url = validate_public_url(request.url)
     with jobs_lock:
-        active = sum(1 for job in jobs.values() if job["status"] in {"queued", "downloading", "processing"})
+        active = sum(1 for job in jobs.values() if job["status"] in {"queued", "downloading", "processing", "cancelling"})
         if active >= MAX_ACTIVE_JOBS:
             raise HTTPException(status_code=429, detail="Download queue is full. Try again shortly.")
         job_id = uuid.uuid4().hex
