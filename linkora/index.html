@@ -146,26 +146,21 @@ footer a{color:var(--brand);text-decoration:none}
    if(match)return safeFilename(match[1].trim());
    try{return safeFilename(decodeURIComponent(new URL(url).pathname.split('/').pop()))}catch{return 'linkora-download'}
  }
+ function proxyUrl(url){return '/api/download?url='+encodeURIComponent(url)}
  async function inspect(url){
-   let r=await fetch(url,{method:'HEAD',mode:'cors',credentials:'omit',redirect:'follow'});
-   if(r.status===405||r.status===501){
-     r=await fetch(url,{method:'GET',headers:{Range:'bytes=0-0'},mode:'cors',credentials:'omit',redirect:'follow'});
-     if(r.body)await r.body.cancel();
-   }
-   if(!r.ok&&r.status!==206)throw new Error('The source returned HTTP '+r.status+'.');
-   const final=safeFinalUrl(r.url||url);
-   if(!final)throw new Error('The link redirected to a blocked or non-public destination.');
+   const r=await fetch(proxyUrl(url),{method:'HEAD',credentials:'same-origin'});
+   if(!r.ok)throw new Error((await r.text().catch(()=>''))||('LINKORA could not access this file (HTTP '+r.status+').'));
    const type=(r.headers.get('content-type')||'').split(';')[0].toLowerCase();
    const size=Number(r.headers.get('content-length')||0);
-   return {response:r,url:final.href,type,size};
+   return {response:r,url,type,size};
  }
  async function downloadFile(url){
    const button=actions.querySelector('button');
    if(button){button.disabled=true;button.textContent='Downloading…'}
    try{
-     const r=await fetch(url,{method:'GET',mode:'cors',credentials:'omit',redirect:'follow'});
+     const r=await fetch(proxyUrl(url),{method:'GET',credentials:'same-origin'});
      if(!r.ok)throw new Error('The file host returned HTTP '+r.status+'.');
-     const final=safeFinalUrl(r.url||url);
+     const final=safeFinalUrl(r.url||location.href);
      if(!final)throw new Error('The download redirected to a blocked or non-public destination.');
      const declared=Number(r.headers.get('content-length')||0);
      if(declared>MAX_BYTES)throw new Error('The file exceeds the 100 MB browser limit.');
@@ -209,7 +204,7 @@ footer a{color:var(--brand);text-decoration:none}
      const downloadButton=document.createElement('button');downloadButton.type='button';downloadButton.textContent='Download file';downloadButton.addEventListener('click',()=>downloadFile(result.url));actions.appendChild(downloadButton);actions.hidden=false;
      addAction('Open source',result.url);
    }catch(err){
-     const msg=(err&&err.name==='TypeError')?'The source blocks browser access (CORS) or does not allow link inspection.':(err.message||'The link could not be checked.');
+     const msg=(err&&err.name==='TypeError')?'LINKORA's download service could not access this source.':(err.message||'The link could not be checked.');
      show(msg+' LINKORA cannot bypass this restriction. If you trust the source and have permission, open it directly and use the publisher’s download option.','warn');
      addAction('Open original link',u.href);
    }finally{check.disabled=false;check.textContent='Check link'}
