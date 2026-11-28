@@ -68,6 +68,25 @@ class DownloadOptionTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             validate_options(request)
 
+    def test_accepts_bounded_playlist_request(self):
+        request = DownloadRequest(url="https://example.com/list", playlist_mode=True, playlist_limit=12,
+                                  playlist_items=[1, 3, 5])
+        validate_options(request)
+
+    def test_rejects_playlist_items_without_playlist_mode(self):
+        request = DownloadRequest(url="https://example.com/list", playlist_items=[1, 2])
+        with self.assertRaises(HTTPException):
+            validate_options(request)
+
+    def test_rejects_duplicate_playlist_items(self):
+        request = DownloadRequest(url="https://example.com/list", playlist_mode=True, playlist_items=[2, 2])
+        with self.assertRaises(HTTPException):
+            validate_options(request)
+
+    def test_rejects_playlist_limit_over_cap(self):
+        with self.assertRaises(Exception):
+            DownloadRequest(url="https://example.com/list", playlist_mode=True, playlist_limit=26)
+
 
 class ApiKeyTests(unittest.TestCase):
     def test_requires_configured_key(self):
