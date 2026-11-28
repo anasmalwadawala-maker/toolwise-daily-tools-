@@ -3,7 +3,9 @@ from __future__ import annotations
 import asyncio
 import hmac
 import ipaddress
+import json
 import os
+import sqlite3
 import shutil
 import socket
 import threading
@@ -21,6 +23,7 @@ from pydantic import BaseModel, Field
 
 APP_VERSION = "0.1.0"
 DOWNLOAD_DIR = Path(os.getenv("DOWNLOAD_DIR", "/tmp/linkora-downloads"))
+HISTORY_DB_PATH = Path(os.getenv("LINKORA_HISTORY_DB", str(DOWNLOAD_DIR / "linkora-history.sqlite3")))
 MAX_FILE_BYTES = int(os.getenv("MAX_FILE_BYTES", str(500 * 1024 * 1024)))
 MAX_ACTIVE_JOBS = int(os.getenv("MAX_ACTIVE_JOBS", "2"))
 JOB_RETENTION_SECONDS = int(os.getenv("JOB_RETENTION_SECONDS", "7200"))
@@ -105,6 +108,45 @@ def validate_public_url(raw_url: str) -> str:
         raise HTTPException(status_code=400, detail=str(exc) or "Invalid media URL") from exc
 
 
+def persist_job(job: dict) -> None:
+    """Persist job metadata; durability depends on HISTORY_DB_PATH being on persistent storage."""
+    HISTORY_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(job, separators=(",", ":"), default=str)
+    with sqlite3.connect(HISTORY_DB_PATH, timeout=10) as connection:
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, created_at REAL NOT NULL, payload TEXT NOT NULL)"
+        )
+        connection.execute(
+            "INSERT INTO jobs(id, created_at, payload) VALUES(?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET created_at=excluded.created_at, payload=excluded.payload",
+            (job["id"], job["created_at"], payload),
+        )
+
+
+def restore_jobs() -> None:
+    """Restore history on startup and mark in-flight jobs interrupted."""
+    if not HISTORY_DB_PATH.exists():
+        return
+    try:
+        with sqlite3.connect(HISTORY_DB_PATH, timeout=10) as connection:
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, created_at REAL NOT NULL, payload TEXT NOT NULL)"
+            )
+            rows = connection.execute("SELECT payload FROM jobs ORDER BY created_at DESC LIMIT 200").fetchall()
+        for (payload,) in rows:
+            job = json.loads(payload)
+            if job.get("status") in {"queued", "downloading", "processing", "cancelling"}:
+                job.update(status="error", error="Service restarted before this download finished", finished_at=time.time())
+            file_path = job.get("file_path")
+            if job.get("status") == "finished" and (not file_path or not Path(file_path).is_file()):
+                job.update(status="expired", error="Downloaded file is no longer stored on this server")
+            jobs[job["id"]] = job
+            cancel_events[job["id"]] = threading.Event()
+            persist_job(job)
+    except (OSError, sqlite3.Error, ValueError, KeyError, TypeError):
+        return
+
+
 def prune_old_jobs() -> None:
     cutoff = time.time() - JOB_RETENTION_SECONDS
     with jobs_lock:
@@ -112,7 +154,11 @@ def prune_old_jobs() -> None:
                    if job.get("finished_at", job.get("created_at", time.time())) < cutoff
                    and job.get("status") in {"finished", "error"}]
         for jid in expired:
-            jobs.pop(jid, None)
+            expired_job = jobs.pop(jid, None)
+            if expired_job:
+                with sqlite3.connect(HISTORY_DB_PATH, timeout=10) as connection:
+                    connection.execute("DELETE FROM jobs WHERE id = ?", (jid,))
+            cancel_events.pop(jid, None)
             shutil.rmtree(DOWNLOAD_DIR / jid, ignore_errors=True)
 
 
@@ -142,6 +188,7 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
         with jobs_lock:
             if job_id in jobs:
                 jobs[job_id].update(status="cancelled", error="Download cancelled", finished_at=time.time())
+                persist_job(jobs[job_id])
         return
 
     def progress_hook(data: dict) -> None:
@@ -157,9 +204,11 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
                 job["status"] = "downloading"
                 job["progress"] = round(min(99, downloaded * 100 / total), 1) if total else 0
                 job["filesize"] = total
+                persist_job(job)
             elif data.get("status") == "finished":
                 job["status"] = "processing"
                 job["progress"] = 99
+                persist_job(job)
 
     options = base_ydl_options()
     options["noplaylist"] = not request.playlist_mode
@@ -221,11 +270,18 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
                 jobs[job_id].update(status="finished", progress=100, title=title or file_path.stem,
                                     filename=file_path.name, filesize=file_path.stat().st_size,
                                     file_path=str(file_path), finished_at=time.time())
+                persist_job(jobs[job_id])
     except Exception as exc:
         with jobs_lock:
             if job_id in jobs:
                 cancelled = cancel_events.get(job_id, threading.Event()).is_set() or "cancelled by user" in str(exc).lower()
                 jobs[job_id].update(status="cancelled" if cancelled else "error", error=("Download cancelled" if cancelled else str(exc)[:500]), finished_at=time.time())
+                persist_job(jobs[job_id])
+
+
+@app.on_event("startup")
+def startup_restore_history() -> None:
+    restore_jobs()
 
 
 @app.get("/health")
@@ -284,6 +340,7 @@ def create_download(request: DownloadRequest, background_tasks: BackgroundTasks)
                "format": request.format, "quality": request.quality, "request": request.model_dump()}
         jobs[job_id] = job
         cancel_events[job_id] = threading.Event()
+        persist_job(job)
     background_tasks.add_task(run_download, job_id, url, request)
     return public_job(job)
 
@@ -298,6 +355,7 @@ def cancel_download(job_id: str) -> dict:
             raise HTTPException(status_code=409, detail="This download can no longer be cancelled")
         cancel_events.setdefault(job_id, threading.Event()).set()
         job["status"] = "cancelling"
+        persist_job(job)
         return public_job(job)
 
 
@@ -318,6 +376,7 @@ def retry_download(job_id: str, background_tasks: BackgroundTasks) -> dict:
                    "format": request.format, "quality": request.quality, "request": request.model_dump()}
         jobs[new_id] = new_job
         cancel_events[new_id] = threading.Event()
+        persist_job(new_job)
     background_tasks.add_task(run_download, new_id, validate_public_url(request.url), request)
     return public_job(new_job)
 
