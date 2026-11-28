@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.main import require_api_key, validate_public_url
+from app.main import DownloadRequest, require_api_key, validate_options, validate_public_url
 from fastapi import HTTPException
 
 
@@ -44,6 +44,29 @@ class UrlValidationTests(unittest.TestCase):
         with patch("app.main.socket.getaddrinfo", return_value=answer):
             with self.assertRaises(HTTPException):
                 validate_public_url("https://example.com/video.mp4")
+
+
+class DownloadOptionTests(unittest.TestCase):
+    def test_accepts_supported_quality_and_subtitle_options(self):
+        request = DownloadRequest(url="https://example.com/video", quality="720",
+                                  subtitles=True, automatic_subtitles=True,
+                                  subtitle_languages=["en", "en-US"], thumbnail=True)
+        validate_options(request)
+
+    def test_rejects_unsupported_quality(self):
+        request = DownloadRequest(url="https://example.com/video", quality="2160")
+        with self.assertRaises(HTTPException):
+            validate_options(request)
+
+    def test_rejects_invalid_subtitle_language(self):
+        request = DownloadRequest(url="https://example.com/video", subtitle_languages=["../../etc"])
+        with self.assertRaises(HTTPException):
+            validate_options(request)
+
+    def test_rejects_quality_for_mp3(self):
+        request = DownloadRequest(url="https://example.com/audio", format="mp3", quality="720")
+        with self.assertRaises(HTTPException):
+            validate_options(request)
 
 
 class ApiKeyTests(unittest.TestCase):
