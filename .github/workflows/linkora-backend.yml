@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - linkora/metube-style-backend
+      - linkora/metube-feature-parity
   pull_request:
     paths:
       - "linkora-backend/**"
