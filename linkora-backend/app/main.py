@@ -152,7 +152,7 @@ def prune_old_jobs() -> None:
     with jobs_lock:
         expired = [jid for jid, job in jobs.items()
                    if job.get("finished_at", job.get("created_at", time.time())) < cutoff
-                   and job.get("status") in {"finished", "error"}]
+                   and job.get("status") in {"finished", "error", "cancelled", "expired"}]
         for jid in expired:
             expired_job = jobs.pop(jid, None)
             if expired_job:
