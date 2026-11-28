@@ -37,7 +37,7 @@ Do not mark any test as passed until it has been run against a deployed preview 
 
 ## Deploy to Cloudflare Pages (free static hosting)
 1. Connect this GitHub repository to Cloudflare Pages.
-2. Use the `linkora/reliability-hardening` branch for a preview deployment. The Cloudflare preview project is restricted to this branch, with production deployments disabled.
+2. Use the `linkora/reliability-hardening` branch for a preview deployment. The Cloudflare preview project is restricted to this branch, with production deployments disabled. Its build-watch include pattern is `*` (Cloudflare Pages uses a single asterisk to match paths recursively); the project root remains `linkora`.
 3. Set the project root directory to `linkora`.
 4. Leave the build command blank; set the output directory to the project root itself (`.`).
 5. Deploy a preview and test the resulting `*.pages.dev` URL on mobile and desktop. Confirm the deployment reports that it includes Pages Functions before testing `/api/download`.
