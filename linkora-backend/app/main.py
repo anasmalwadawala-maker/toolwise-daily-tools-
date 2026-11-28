@@ -242,6 +242,9 @@ def run_download(job_id: str, url: str, request: DownloadRequest) -> None:
 
     try:
         with download_semaphore:
+            # A job may be cancelled while waiting for the single-worker semaphore.
+            if cancel_events.get(job_id, threading.Event()).is_set():
+                raise RuntimeError("Download cancelled by user")
             with yt_dlp.YoutubeDL(options) as downloader:
                 info = downloader.extract_info(url, download=True)
                 title = info.get("title") if isinstance(info, dict) else None
