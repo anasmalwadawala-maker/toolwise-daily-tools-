@@ -62,9 +62,9 @@ footer a{color:var(--brand);text-decoration:none}
 </div></header>
 <main class="wrap">
   <section class="panel downloader" aria-labelledby="download-label">
-    <label id="download-label" for="media-url">Paste a direct file URL or YouTube link</label>
+    <label id="download-label" for="media-url">Paste a direct file URL or supported media-page link</label>
     <div class="inputrow"><input id="media-url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/media/video.mp4" aria-describedby="url-hint"><button id="check-btn" type="button">Check link</button></div>
-    <p class="hint" id="url-hint">Direct public file links are downloadable here. YouTube links open official download instructions for videos uploaded to your own channel.</p>
+    <p class="hint" id="url-hint">Direct public files use the direct-download tool. Some supported media pages can use LINKORA’s separate download engine. YouTube owner downloads use official YouTube tools.</p>
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <div id="action-area" class="actions" hidden></div>
   </section>
@@ -77,7 +77,7 @@ footer a{color:var(--brand);text-decoration:none}
       <article class="tile"><span class="pill">IMAGES</span><h3>Images and GIFs</h3><p>JPG, PNG, WebP, GIF and other direct image files.</p></article>
       <article class="tile"><span class="pill">DOCUMENTS</span><h3>Documents</h3><p>PDF and other public files you have permission to save.</p></article>
       <article class="tile"><span class="pill">MOBILE</span><h3>Phone and desktop</h3><p>Responsive layout designed for modern browsers.</p></article>
-      <article class="tile"><span class="pill">PRIVACY</span><h3>No file storage</h3><p>Your link is processed by LINKORA’s temporary download service. Files and download history are not stored by this app.</p></article>
+      <article class="tile"><span class="pill">PRIVACY</span><h3>Temporary processing</h3><p>Engine downloads are held temporarily on the backend and may be cleared after a short period or when a free server restarts.</p></article>
     </div>
   </section>
 
@@ -95,7 +95,7 @@ footer a{color:var(--brand);text-decoration:none}
     <div class="faq"><h3>Why does another social-media link not download?</h3><p>Social platforms often require authentication, signed URLs or their own download tools. LINKORA intentionally does not extract protected content or work around platform restrictions.</p></div>
     <div class="faq"><h3>Why can't LINKORA check some direct links?</h3><p>A source may deny server-side retrieval, require sign-in, rate-limit requests or block automated access. If you have permission, use the publisher’s own download option.</p></div>
     <div class="faq"><h3>Is LINKORA free?</h3><p>Yes. This version is free to use. Your browser and the file host may apply their own limits.</p></div>
-    <div class="faq"><h3>Are my links stored?</h3><p>Your pasted URL is sent to LINKORA’s temporary download endpoint so it can fetch the requested public file. This app does not keep a download history or persist the file. Cloudflare processes the request to provide hosting and delivery.</p></div>
+    <div class="faq"><h3>Are my links stored?</h3><p>Direct-file requests are proxied through Cloudflare and are not saved by the direct-file function. Supported media-page requests are sent to the separate download engine; its queue is held in memory and downloaded files are temporarily stored on that server. Temporary files may be cleared after the retention window or when the host restarts. Do not submit private links, credentials or sensitive URLs.</p></div>
   </section>
 </main>
 <footer>LINKORA · Toolwise Daily · <a href="https://toolwisedaily.wordpress.com/privacy-policy/">Privacy</a> · <a href="https://toolwisedaily.wordpress.com/contact/">Contact</a></footer>
@@ -196,11 +196,66 @@ footer a{color:var(--brand);text-decoration:none}
      addAction('Open original file',url);
    }
  }
+
+ function addEngineButton(label,handler){
+   const b=document.createElement('button');b.type='button';b.textContent=label;
+   b.addEventListener('click',handler);actions.appendChild(b);actions.hidden=false;return b;
+ }
+ async function engineJson(path,options={}){
+   const r=await fetch('/api/engine'+path,{credentials:'same-origin',...options});
+   const data=await r.json().catch(()=>({}));
+   if(!r.ok)throw new Error(data.detail||data.error||('Download engine returned HTTP '+r.status+'.'));
+   return data;
+ }
+ async function checkEngine(url){
+   if(!window.confirm('Continue only if you own this content or are authorized to download it AND the source platform permits downloading. LINKORA does not bypass logins, DRM, paywalls or access controls. Continue?'))return;
+   check.disabled=true;check.textContent='Checking…';
+   show('Checking whether LINKORA’s media engine supports this source…');
+   try{
+     const info=await engineJson('/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,format:'best'})});
+     const duration=info.duration?(' · '+Math.round(info.duration)+' seconds'):'';
+     const formatCount=Array.isArray(info.formats)?info.formats.length:0;
+     show('Supported media found: '+(info.title||'Untitled media')+duration+'. '+formatCount+' format options detected. Choose a download type below.','good');
+     addEngineButton('Download video',()=>downloadViaEngine(url,'best'));
+     addEngineButton('Download MP3',()=>downloadViaEngine(url,'mp3'));
+     addAction('Open original page',url);
+   }catch(e){
+     show((e.message||'The media engine could not process this link.')+' Not every site or video is supported.','warn');
+     addAction('Open original page',url);
+   }finally{check.disabled=false;check.textContent='Check link'}
+ }
+ async function downloadViaEngine(url,format){
+   const buttons=actions.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
+   show(format==='mp3'?'Preparing MP3 download…':'Adding video to the download queue…');
+   try{
+     const job=await engineJson('/downloads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,format})});
+     if(!job.id)throw new Error('The download engine did not return a job ID.');
+     show('Download queued. Waiting for the engine…','good');
+     let latest=job;
+     for(let attempt=0;attempt<400;attempt++){
+       await new Promise(resolve=>setTimeout(resolve,1500));
+       latest=await engineJson('/downloads/'+encodeURIComponent(job.id));
+       if(latest.status==='finished')break;
+       if(latest.status==='error')throw new Error(latest.error||'Download failed at the source.');
+       show('Download '+(latest.status||'queued')+' · '+(Number(latest.progress)||0)+'%'+(latest.title?' · '+latest.title:''),'good');
+     }
+     if(latest.status!=='finished')throw new Error('This download is taking too long. Check again later.');
+     show('Your file is ready: '+(latest.filename||latest.title||'download')+'. Files are temporary and may expire.','good');
+     const a=document.createElement('a');a.className='button';a.textContent='Save downloaded file';
+     a.href='/api/engine/downloads/'+encodeURIComponent(job.id)+'/file';a.download=latest.filename||'linkora-download';
+     actions.appendChild(a);actions.hidden=false;
+   }catch(e){
+     show((e.message||'Download failed.')+' Try another supported source or use its official download option.','warn');
+   }finally{
+     actions.querySelectorAll('button').forEach(b=>b.disabled=false);
+   }
+ }
+
  async function checkLink(){
    const u=safeUrl(input.value.trim());
    if(!u){show('Enter a valid public http or https URL. Local/private network addresses are not accepted.','error');return}
    if(isYouTube(u.hostname)){showYouTubeHelp(u.href);return}
-   if(isSocial(u.hostname)){show('This appears to be a social or streaming platform link. LINKORA cannot extract media from this service or bypass its access rules. Use the platform’s official download/export option, or paste a direct media-file URL provided by the publisher.','warn');addAction('Open original page',u.href);return}
+   if(isSocial(u.hostname)){await checkEngine(u.href);return}
    const ext=extension(u.pathname);
    if(ext&&!fileExts.includes(ext)){show('This link ends in .'+ext+'. LINKORA only attempts common direct media and document formats. Open the original link to review its download options.','warn');addAction('Open original link',u.href);return}
    check.disabled=true;check.textContent='Checking…';show('Checking whether LINKORA’s download service can access this public file…');
